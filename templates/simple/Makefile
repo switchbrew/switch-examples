@@ -27,9 +27,9 @@ EXEFS_SRC	:=	exefs_src
 #---------------------------------------------------------------------------------
 # options for code generation
 #---------------------------------------------------------------------------------
-ARCH	:=	-march=armv8-a
+ARCH	:=	-march=armv8-a -fPIC
 
-CFLAGS	:=	-g -Wall -O2 -fPIC \
+CFLAGS	:=	-g -Wall -O2 \
 			-ffast-math \
 			$(ARCH) $(DEFINES)
 
