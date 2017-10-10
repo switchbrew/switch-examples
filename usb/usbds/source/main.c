@@ -12,7 +12,6 @@ Result usbds_test(u8 *tmpbuf)
 {
 	Result ret=0;
 	s32 tmpindex=0;
-	Handle usb_state_event;
 	UsbDsInterface* interface = NULL;
 	UsbDsEndpoint *endpoint_in = NULL, *endpoint_out = NULL;
 
@@ -41,8 +40,6 @@ Result usbds_test(u8 *tmpbuf)
                 .wMaxPacketSize = 0x40,
 	};
 
-	usb_state_event = usbDsGetStateChangeEvent();
-
 	//Setup interface.
         ret = usbDsGetDsInterface(&interface, &interface_descriptor, "usb");
 	if(R_FAILED(ret))return ret;
@@ -57,11 +54,9 @@ Result usbds_test(u8 *tmpbuf)
 	ret = usbDsInterface_EnableInterface(interface);
 	if(R_FAILED(ret))return ret;
 
-	//Wait for usb comms init to start, which includes waiting for the usb cable to be inserted if it's not already.
-	svcWaitSynchronization(&tmpindex, &usb_state_event, 1, U64_MAX);
-	svcClearEvent(usb_state_event);
-
-	svcSleepThread(5000000000);//The above will be signalled before the endpoints are ready for use, so just delay 5s (there's currently no known way to properly wait for endpoints-ready).
+	//Wait for initialization to finish where data-transfer is usable. This includes waiting for the usb cable to be inserted if it's not already.
+	ret = usbDsWaitReady();
+	if(R_FAILED(ret))return ret;
 
 	memset(tmpbuf, 0, 0x1000);
 	tmpbuf[0] = 0x11;
