@@ -6,7 +6,6 @@
 
 //Example for usbds, see libnx usb.h. Switch-as-device<>host USB comms.
 //Linux detects this as a serial device.
-//Data transfer over USB works fine with this, however data isn't returned by "/dev/{device}" (depending on what is used for reading it) due to the header(?) from the device->host transfer not being valid.
 
 Result usbds_test(u8 *tmpbuf)
 {
@@ -59,10 +58,11 @@ Result usbds_test(u8 *tmpbuf)
 	if(R_FAILED(ret))return ret;
 
 	memset(tmpbuf, 0, 0x1000);
-	tmpbuf[0] = 0x11;
-	tmpbuf[1] = 0x1;
 	char *strptr = "Hello World!\n";
 	strncpy((char*)&tmpbuf[2], strptr, 0x1000-2);
+
+	tmpbuf[0] = 0x11;
+	tmpbuf[1] = 0x1;
 
 	//Start a device->host transfer.
 	ret = usbDsEndpoint_PostBufferAsync(endpoint_in, tmpbuf, 2+strlen(strptr), NULL);
@@ -85,12 +85,14 @@ Result usbds_test(u8 *tmpbuf)
 	memcpy(&tmpbuf[2], &tmpbuf[0x400], 0x200-2);
 
 	//Start a device->host transfer.
-	ret = usbDsEndpoint_PostBufferAsync(endpoint_in, tmpbuf, 0x200, NULL);
+	ret = usbDsEndpoint_PostBufferAsync(endpoint_in, tmpbuf, 0x2+1, NULL);
 	if(R_FAILED(ret))return ret;
 
 	//Wait for the transfer to finish.
 	svcWaitSynchronization(&tmpindex, &endpoint_in->CompletionEvent, 1, U64_MAX);
 	svcClearEvent(endpoint_in->CompletionEvent);
+
+	svcSleepThread(5000000000);//Delay 5s
 
 	return 0;
 }
