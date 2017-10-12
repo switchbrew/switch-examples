@@ -28,7 +28,7 @@ Result usbds_test(u8 *tmpbuf)
 		.bDescriptorType = USB_DT_ENDPOINT,
 		.bEndpointAddress = USB_ENDPOINT_IN,
                 .bmAttributes = USB_TRANSFER_TYPE_BULK,
-                .wMaxPacketSize = 0x40,
+                .wMaxPacketSize = 0x200,
 	};
 
 	struct usb_endpoint_descriptor endpoint_descriptor_out = {
@@ -36,7 +36,7 @@ Result usbds_test(u8 *tmpbuf)
 		.bDescriptorType = USB_DT_ENDPOINT,
 		.bEndpointAddress = USB_ENDPOINT_OUT,
                 .bmAttributes = USB_TRANSFER_TYPE_BULK,
-                .wMaxPacketSize = 0x40,
+                .wMaxPacketSize = 0x200,
 	};
 
 	//Setup interface.
@@ -57,19 +57,33 @@ Result usbds_test(u8 *tmpbuf)
 	ret = usbDsWaitReady();
 	if(R_FAILED(ret))return ret;
 
+	u32 somepos;
+	for(somepos=0; somepos<0x101; somepos++)
+	{
 	memset(tmpbuf, 0, 0x1000);
-	char *strptr = "Hello World!\n";
-	strncpy((char*)&tmpbuf[2], strptr, 0x1000-2);
+	char *strptr = "\n";//"Hello World!\n";
 
 	tmpbuf[0] = 0x11;
 	tmpbuf[1] = 0x1;
+	if(somepos==0 || somepos==0x101)
+	{
+		strncpy((char*)&tmpbuf[2], strptr, 0x1000-2);
+		ret = usbDsEndpoint_PostBufferAsync(endpoint_in, tmpbuf, 2+strlen(strptr), NULL);
+	}
+	else
+	{
+		tmpbuf[2] = somepos-1;
+		ret = usbDsEndpoint_PostBufferAsync(endpoint_in, tmpbuf, 2+1, NULL);
+	}
 
 	//Start a device->host transfer.
-	ret = usbDsEndpoint_PostBufferAsync(endpoint_in, tmpbuf, 2+strlen(strptr), NULL);
+	//ret = usbDsEndpoint_PostBufferAsync(endpoint_in, tmpbuf, 2+1, NULL);
+	//ret = usbDsEndpoint_PostBufferAsync(endpoint_in, tmpbuf, 2+strlen(strptr), NULL);
 	if(R_FAILED(ret))return ret;
 	//Wait for the transfer to finish.
 	svcWaitSynchronization(&tmpindex, &endpoint_in->CompletionEvent, 1, U64_MAX);
 	svcClearEvent(endpoint_in->CompletionEvent);
+	}
 
 	//Start a host->device transfer.
 	ret = usbDsEndpoint_PostBufferAsync(endpoint_out, tmpbuf, 0x200, NULL);
