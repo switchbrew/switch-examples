@@ -6,6 +6,8 @@
 
 //Example for usbds, see libnx usb.h. Switch-as-device<>host USB comms.
 //Linux detects this as a serial device.
+//For using serial via usbds in general, see the usbdev example.
+//See libnx usbdev.c/usb.h for getting actual-transfer-size after using usbDsEndpoint_PostBufferAsync.
 
 Result usbds_test(u8 *tmpbuf)
 {
