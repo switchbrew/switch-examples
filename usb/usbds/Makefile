@@ -106,7 +106,7 @@ $(BUILD):
 #---------------------------------------------------------------------------------
 clean:
 	@echo clean ...
-	@rm -fr $(BUILD) $(TARGET).pfs0 $(TARGET).nso $(TARGET).elf
+	@rm -fr $(BUILD) $(TARGET).pfs0 $(TARGET).nso $(TARGET).nro $(TARGET).elf
 
 
 #---------------------------------------------------------------------------------
@@ -117,9 +117,13 @@ DEPENDS	:=	$(OFILES:.o=.d)
 #---------------------------------------------------------------------------------
 # main targets
 #---------------------------------------------------------------------------------
+all	:	$(OUTPUT).pfs0 $(OUTPUT).nro
+
 $(OUTPUT).pfs0	:	$(OUTPUT).nso
 
 $(OUTPUT).nso	:	$(OUTPUT).elf
+
+$(OUTPUT).nro	:	$(OUTPUT).elf
 
 $(OUTPUT).elf	:	$(OFILES)
 
