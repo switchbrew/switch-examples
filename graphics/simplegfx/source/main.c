@@ -4,7 +4,7 @@
 
 #include "image_bin.h"//Your own raw RGB888 1280x720 image at "data/image.bin" is required.
 
-//See also libnx gfx.h + gfx.c source for gfxWaitForVsync().
+//See also libnx gfx.h.
 
 int main(int argc, char **argv)
 {
