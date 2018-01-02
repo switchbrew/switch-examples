@@ -106,32 +106,32 @@ export LIBPATHS	:=	$(foreach dir,$(LIBDIRS),-L$(dir)/lib)
 
 export BUILD_EXEFS_SRC := $(TOPDIR)/$(EXEFS_SRC)
 
-.PHONY: $(BUILD) clean all
-
 ifeq ($(strip $(ICON)),)
-icons := $(wildcard *.jpg)
-ifneq (,$(findstring $(TARGET).jpg,$(icons)))
-	export APP_ICON := $(TOPDIR)/$(TARGET).jpg
-else
-	ifneq (,$(findstring icon.jpg,$(icons)))
-		export APP_ICON := $(TOPDIR)/icon.jpg
+	icons := $(wildcard *.jpg)
+	ifneq (,$(findstring $(TARGET).jpg,$(icons)))
+		export APP_ICON := $(TOPDIR)/$(TARGET).jpg
+	else
+		ifneq (,$(findstring icon.jpg,$(icons)))
+			export APP_ICON := $(TOPDIR)/icon.jpg
+		endif
 	endif
-endif
 else
-export APP_ICON := $(TOPDIR)/$(ICON)
+	export APP_ICON := $(TOPDIR)/$(ICON)
 endif
 
 ifeq ($(strip $(NO_ICON)),)
-export NROFLAGS += --icon=$(APP_ICON)
+	export NROFLAGS += --icon=$(APP_ICON)
 endif
 
 ifeq ($(strip $(NO_NACP)),)
-export NROFLAGS += --nacp=$(CURDIR)/$(TARGET).nacp
+	export NROFLAGS += --nacp=$(CURDIR)/$(TARGET).nacp
 endif
 
 ifneq ($(APP_TITLEID),)
-export NACPFLAGS += --titleid=$(APP_TITLEID)
+	export NACPFLAGS += --titleid=$(APP_TITLEID)
 endif
+
+.PHONY: $(BUILD) clean all
 
 #---------------------------------------------------------------------------------
 all: $(BUILD)
