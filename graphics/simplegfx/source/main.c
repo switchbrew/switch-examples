@@ -25,15 +25,12 @@ int main(int argc, char **argv)
 	//gfxConfigureAutoResolutionDefault(true);//Set current resolution automatically depending on current/changed OperationMode. Only use this when using gfxInitResolution*().
 	//Note that while the above commented code enables 1080p for docked-mode, this example only draws a 720p image, with the rest of the screen being left at white.
 
-	//"Safe default, single Joy-Con have buttons/sticks rotated for orientation"
-	hidSetControllerLayout(CONTROLLER_PLAYER_1, LAYOUT_DEFAULT);
-
 	while(appletMainLoop())
 	{
 		//Scan all the inputs. This should be done once for each frame
 		hidScanInput();
 
-		if ((hidKeysDown(CONTROLLER_PLAYER_1) | hidKeysDown(CONTROLLER_HANDHELD)) & KEY_PLUS) break;
+		if (hidKeysDown(CONTROLLER_P1_AUTO) & KEY_PLUS) break;
 
 		framebuf = gfxGetFramebuffer((u32*)&width, (u32*)&height);
 		framebuf32 = (u32*)framebuf;

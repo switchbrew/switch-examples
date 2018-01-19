@@ -15,15 +15,12 @@ int main(int argc, char **argv)
 	//the row and column where you want your cursor to move
 	printf("\x1b[16;20HHello World!");
 
-	//"Safe default, single Joy-Con have buttons/sticks rotated for orientation"
-	hidSetControllerLayout(CONTROLLER_PLAYER_1, LAYOUT_DEFAULT);
-
 	while(appletMainLoop())
 	{
 		//Scan all the inputs. This should be done once for each frame
 		hidScanInput();
 
-		if ((hidKeysDown(CONTROLLER_PLAYER_1) | hidKeysDown(CONTROLLER_HANDHELD)) & KEY_PLUS) break;
+		if (hidKeysDown(CONTROLLER_P1_AUTO) & KEY_PLUS) break;
 
 		gfxFlushBuffers();
 		gfxSwapBuffers();
