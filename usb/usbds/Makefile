@@ -2,12 +2,12 @@
 .SUFFIXES:
 #---------------------------------------------------------------------------------
 
-ifeq ($(strip $(DEVKITA64)),)
-$(error "Please set DEVKITA64 in your environment. export DEVKITA64=<path to>DEVKITA64")
+ifeq ($(strip $(DEVKITPRO)),)
+$(error "Please set DEVKITPRO in your environment. export DEVKITPRO=<path to>/devkitpro")
 endif
 
 TOPDIR ?= $(CURDIR)
-include $(DEVKITA64)/switch_rules
+include $(DEVKITPRO)/libnx/switch_rules
 
 #---------------------------------------------------------------------------------
 # TARGET is the name of the output
@@ -16,7 +16,7 @@ include $(DEVKITA64)/switch_rules
 # DATA is a list of directories containing data files
 # INCLUDES is a list of directories containing header files
 # EXEFS_SRC is the optional input directory containing data copied into exefs, if anything this normally should only contain "main.npdm".
-# 
+#
 # NO_ICON: if set to anything, do not use icon.
 # NO_NACP: if set to anything, no .nacp file is generated.
 # APP_TITLE is the name of the app stored in the .nacp file (Optional)
@@ -50,7 +50,7 @@ CFLAGS	+=	$(INCLUDE) -DSWITCH
 CXXFLAGS	:= $(CFLAGS) -fno-rtti -fno-exceptions -std=gnu++11
 
 ASFLAGS	:=	-g $(ARCH)
-LDFLAGS	=	-specs=switch.specs -g $(ARCH) -Wl,-Map,$(notdir $*.map)
+LDFLAGS	=	-specs=$(DEVKITPRO)/libnx/switch.specs -g $(ARCH) -Wl,-Map,$(notdir $*.map)
 
 LIBS	:= -lnx
 
