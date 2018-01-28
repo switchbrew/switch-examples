@@ -126,7 +126,7 @@ int main(int argc, char **argv)
 		.SerialNumber = "1337",
 	};
 
-	ret = usbDsInitialize(USBCOMPLEXID_Default, &deviceinfo);
+	ret = usbDsInitialize(UsbComplexId_Default, &deviceinfo);
 
 	if (R_SUCCEEDED(ret)) {
 		u8 *tmpbuf = memalign(0x1000, 0x1000);//The buffer for PostBufferAsync commands must be 0x1000-byte aligned.
