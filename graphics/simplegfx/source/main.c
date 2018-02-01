@@ -40,7 +40,7 @@ int main(int argc, char **argv)
         //Set framebuf to different shades of grey.
         u32 x, y;
         for (x=0; x<width; x++)
-            for (y=0; y<width; y++)
+            for (y=0; y<height; y++)
                 framebuf[gfxGetFramebufferDisplayOffset(x, y)] = 0x01010101 * cnt * 4;
 
         gfxFlushBuffers();
