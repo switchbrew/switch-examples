@@ -2,12 +2,19 @@
 #include <stdio.h>
 #include <switch.h>
 
+#ifdef DISPLAY_IMAGE
+#include "image_bin.h"//Your own raw RGB888 1280x720 image at "data/image.bin" is required.
+#endif
+
 //See also libnx gfx.h.
 
 int main(int argc, char **argv)
 {
     u32* framebuf;
     u32  cnt=0;
+    #ifdef DISPLAY_IMAGE
+    u8*  imageptr = (u8*)image_bin;
+    #endif
 
     //Enable max-1080p support. Remove for 720p-only resolution.
     //gfxInitResolutionDefault();
@@ -25,6 +32,7 @@ int main(int argc, char **argv)
         if (hidKeysDown(CONTROLLER_P1_AUTO) & KEY_PLUS) break;
 
         u32 width, height;
+        u32 pos;
         framebuf = (u32*) gfxGetFramebuffer((u32*)&width, (u32*)&height);
 
         if(cnt==60)
@@ -40,8 +48,17 @@ int main(int argc, char **argv)
         //Set framebuf to different shades of grey.
         u32 x, y;
         for (x=0; x<width; x++)
+        {
             for (y=0; y<height; y++)
-                framebuf[gfxGetFramebufferDisplayOffset(x, y)] = 0x01010101 * cnt * 4;
+            {
+                pos = y * width + x;
+                #ifdef DISPLAY_IMAGE
+                framebuf[pos] = RGBA8_MAXALPHA(imageptr[pos*3+0]+(cnt*4), imageptr[pos*3+1], imageptr[pos*3+2]);
+                #else
+                framebuf[pos] = 0x01010101 * cnt * 4;
+                #endif
+            }
+        }
 
         gfxFlushBuffers();
         gfxSwapBuffers();
