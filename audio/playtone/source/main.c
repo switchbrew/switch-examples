@@ -8,50 +8,50 @@
 #define SAMPLESPERBUF (SAMPLERATE / 10)
 
 void fill_audio_buffer(void* audio_buffer, size_t offset, size_t size, int frequency) {
-	u32* dest = (u32*) audio_buffer;
+    u32* dest = (u32*) audio_buffer;
 
-	for (int i = 0; i < size; i++) {
-		// This is a simple sine wave, with a frequency of `frequency` Hz, and an amplitude 30% of maximum.
-		s16 sample = 0.3 * 0x7FFF * sin(frequency * (2 * M_PI) * (offset + i) / SAMPLERATE);
+    for (int i = 0; i < size; i++) {
+        // This is a simple sine wave, with a frequency of `frequency` Hz, and an amplitude 30% of maximum.
+        s16 sample = 0.3 * 0x7FFF * sin(frequency * (2 * M_PI) * (offset + i) / SAMPLERATE);
 
-		// Stereo samples are interleaved: left and right channels.
-		dest[i] = (sample << 16) | (sample & 0xffff);
-	}
+        // Stereo samples are interleaved: left and right channels.
+        dest[i] = (sample << 16) | (sample & 0xffff);
+    }
 }
 
 int main(int argc, char **argv)
 {
-	Result rc = 0;
-	Handle event = 0;
+    Result rc = 0;
+    Handle event = 0;
     AudioOutBuffer source_buffer;
     AudioOutBuffer released_buffer;
     
     int notefreq[] = {
-		220,
-		440, 880, 1760, 3520, 7040,
-		14080,
-		7040, 3520, 1760, 880, 440
-	};
+        220,
+        440, 880, 1760, 3520, 7040,
+        14080,
+        7040, 3520, 1760, 880, 440
+    };
 
     u32 raw_data[SAMPLESPERBUF * 2];
     fill_audio_buffer(raw_data, 0, SAMPLESPERBUF * 2, notefreq[4]);
 
-	gfxInitDefault();
+    gfxInitDefault();
 
-	// Initialize console. Using NULL as the second argument tells the console library to use the internal console structure as current one.
-	consoleInit(NULL);
+    // Initialize console. Using NULL as the second argument tells the console library to use the internal console structure as current one.
+    consoleInit(NULL);
 
-	rc = audoutInitialize();
-	printf("audoutInitialize() returned 0x%x\n", rc);
+    rc = audoutInitialize();
+    printf("audoutInitialize() returned 0x%x\n", rc);
 
-	if (R_SUCCEEDED(rc))
-	{
-		rc = audoutRegisterBufferEvent(&event);
-		printf("audoutRegisterBufferEvent() returned 0x%x\n", rc);
-	}
+    if (R_SUCCEEDED(rc))
+    {
+        rc = audoutRegisterBufferEvent(&event);
+        printf("audoutRegisterBufferEvent() returned 0x%x\n", rc);
+    }
 
-	if (R_SUCCEEDED(rc))
-	{
+    if (R_SUCCEEDED(rc))
+    {
         source_buffer.next = 0;
         source_buffer.buffer = raw_data;
         source_buffer.buffer_size = sizeof(raw_data);
@@ -60,23 +60,23 @@ int main(int argc, char **argv)
         
         rc = audoutAppendAudioOutBuffer(&source_buffer);
         printf("audoutAppendAudioOutBuffer() returned 0x%x\n", rc);
-	}
+    }
     
     if (R_SUCCEEDED(rc))
-	{
-		rc = audoutStartAudioOut();
-		printf("audoutStartAudioOut() returned 0x%x\n", rc);
-	}
+    {
+        rc = audoutStartAudioOut();
+        printf("audoutStartAudioOut() returned 0x%x\n", rc);
+    }
     
     bool play_tone = false;
     printf("Press A, B, Y, X, Left, Up, Right, Down, L, R, ZL or ZR to play a different tone.\n");
     
-	while (appletMainLoop())
-	{
-		//Scan all the inputs. This should be done once for each frame
-		hidScanInput();
+    while (appletMainLoop())
+    {
+        //Scan all the inputs. This should be done once for each frame
+        hidScanInput();
 
-		if (hidKeysDown(CONTROLLER_P1_AUTO) & KEY_PLUS) break;
+        if (hidKeysDown(CONTROLLER_P1_AUTO) & KEY_PLUS) break;
         
         if (hidKeysDown(CONTROLLER_P1_AUTO) & KEY_A)
         {
@@ -177,16 +177,16 @@ int main(int argc, char **argv)
         }
         
         gfxFlushBuffers();
-		gfxSwapBuffers();
-		gfxWaitForVsync();
-	}
+        gfxSwapBuffers();
+        gfxWaitForVsync();
+    }
     
     rc = audoutStopAudioOut();
     printf("audoutStopAudioOut() returned 0x%x\n", rc);
 
-	audoutExit();
+    audoutExit();
 
-	gfxExit();
-	return 0;
+    gfxExit();
+    return 0;
 }
 
