@@ -19,6 +19,29 @@ void fill_audio_buffer(void* audio_buffer, size_t offset, size_t size, int frequ
     }
 }
 
+void audout_play(Handle event, AudioOutBuffer source_buffer, AudioOutBuffer released_buffer) {
+    u64 time_now = svcGetSystemTick();
+    while ((svcGetSystemTick() - time_now) < 1250000)
+    {
+        s32 index;
+        Result do_wait = svcWaitSynchronization(&index, &event, 1, 10000000);
+        
+        if (R_SUCCEEDED(do_wait))
+        {
+            svcResetSignal(event);
+            
+            u32 released_count = 0;
+            Result do_release = audoutGetReleasedAudioOutBuffer(&released_buffer, &released_count);
+            
+            while (R_SUCCEEDED(do_release) && (released_count > 0))
+            {
+                do_release = audoutGetReleasedAudioOutBuffer(&released_buffer, &released_count);
+                audoutAppendAudioOutBuffer(&source_buffer);
+            }
+        }
+    }
+}
+
 int main(int argc, char **argv)
 {
     Result rc = 0;
@@ -152,27 +175,7 @@ int main(int argc, char **argv)
         
         if (play_tone)
         {
-            u64 time_now = svcGetSystemTick();
-            while ((svcGetSystemTick() - time_now) < 1250000)
-            {
-                s32 index;
-                Result do_wait = svcWaitSynchronization(&index, &event, 1, 10000000);
-            
-                if (R_SUCCEEDED(do_wait))
-                {
-                    svcResetSignal(event);
-                    
-                    u32 released_count = 0;
-                    Result do_release = audoutGetReleasedAudioOutBuffer(&released_buffer, &released_count);
-                    
-                    while (R_SUCCEEDED(do_release) && (released_count > 0))
-                    {
-                        do_release = audoutGetReleasedAudioOutBuffer(&released_buffer, &released_count);
-                        audoutAppendAudioOutBuffer(&source_buffer);
-                    }
-                }
-            }
-            
+            audout_play(event, source_buffer, released_buffer);
             play_tone = false;
         }
         
@@ -185,8 +188,6 @@ int main(int argc, char **argv)
     printf("audoutStopAudioOut() returned 0x%x\n", rc);
 
     audoutExit();
-
     gfxExit();
     return 0;
 }
-
