@@ -67,6 +67,11 @@ int main(int argc, char **argv)
 
     rc = audoutInitialize();
     printf("audoutInitialize() returned 0x%x\n", rc);
+    
+    printf("Sample rate: 0x%x\n", audoutGetSampleRate());
+    printf("Channel count: 0x%x\n", audoutGetChannelCount());
+    printf("PCM format: 0x%x\n", audoutGetPcmFormat());
+    printf("Device state: 0x%x\n", audoutGetDeviceState());
 
     if (R_SUCCEEDED(rc))
     {
