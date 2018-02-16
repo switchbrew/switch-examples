@@ -22,7 +22,6 @@ void fill_audio_buffer(void* audio_buffer, size_t offset, size_t size, int frequ
 int main(int argc, char **argv)
 {
     Result rc = 0;
-    Handle event = 0;
     AudioOutBuffer source_buffer;
     AudioOutBuffer released_buffer;
     
@@ -41,34 +40,18 @@ int main(int argc, char **argv)
     // Initialize console. Using NULL as the second argument tells the console library to use the internal console structure as current one.
     consoleInit(NULL);
 
+    // Initialize the default audio output device
     rc = audoutInitialize();
     printf("audoutInitialize() returned 0x%x\n", rc);
-    
-    printf("Sample rate: 0x%x\n", audoutGetSampleRate());
-    printf("Channel count: 0x%x\n", audoutGetChannelCount());
-    printf("PCM format: 0x%x\n", audoutGetPcmFormat());
-    printf("Device state: 0x%x\n", audoutGetDeviceState());
 
     if (R_SUCCEEDED(rc))
     {
-        rc = audoutRegisterBufferEvent(&event);
-        printf("audoutRegisterBufferEvent() returned 0x%x\n", rc);
-    }
-
-    if (R_SUCCEEDED(rc))
-    {
-        source_buffer.next = 0;
-        source_buffer.buffer = raw_data;
-        source_buffer.buffer_size = sizeof(raw_data);
-        source_buffer.data_size = SAMPLESPERBUF * 2;
-        source_buffer.data_offset = 0;
+        printf("Sample rate: 0x%x\n", audoutGetSampleRate());
+        printf("Channel count: 0x%x\n", audoutGetChannelCount());
+        printf("PCM format: 0x%x\n", audoutGetPcmFormat());
+        printf("Device state: 0x%x\n", audoutGetDeviceState());
         
-        rc = audoutAppendAudioOutBuffer(&source_buffer);
-        printf("audoutAppendAudioOutBuffer() returned 0x%x\n", rc);
-    }
-    
-    if (R_SUCCEEDED(rc))
-    {
+        // Start audio playback.
         rc = audoutStartAudioOut();
         printf("audoutStartAudioOut() returned 0x%x\n", rc);
     }
@@ -157,7 +140,15 @@ int main(int argc, char **argv)
         
         if (play_tone)
         {
-            audoutPlayBuffer(&event, &source_buffer, &released_buffer, 1250000);
+            // Prepare the audio data source buffer.
+            source_buffer.next = 0;
+            source_buffer.buffer = raw_data;
+            source_buffer.buffer_size = sizeof(raw_data);
+            source_buffer.data_size = SAMPLESPERBUF * 2;
+            source_buffer.data_offset = 0;
+        
+            // Play this buffer once.
+            audoutPlayBuffer(&source_buffer, &released_buffer);
             play_tone = false;
         }
         
@@ -166,10 +157,13 @@ int main(int argc, char **argv)
         gfxWaitForVsync();
     }
     
+    // Stop audio playback.
     rc = audoutStopAudioOut();
     printf("audoutStopAudioOut() returned 0x%x\n", rc);
 
+    // Terminate the default audio output device.
     audoutExit();
+    
     gfxExit();
     return 0;
 }
