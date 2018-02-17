@@ -45,17 +45,16 @@ int main(int argc, char **argv)
         }
 
         //Each pixel is 4-bytes due to RGBA8888.
-        //Set framebuf to different shades of grey.
         u32 x, y;
-        for (x=0; x<width; x++)
+        for (y=0; y<height; y++)//Access the buffer linearly.
         {
-            for (y=0; y<height; y++)
+            for (x=0; x<width; x++)
             {
                 pos = y * width + x;
                 #ifdef DISPLAY_IMAGE
                 framebuf[pos] = RGBA8_MAXALPHA(imageptr[pos*3+0]+(cnt*4), imageptr[pos*3+1], imageptr[pos*3+2]);
                 #else
-                framebuf[pos] = 0x01010101 * cnt * 4;
+                framebuf[pos] = 0x01010101 * cnt * 4;//Set framebuf to different shades of grey.
                 #endif
             }
         }
