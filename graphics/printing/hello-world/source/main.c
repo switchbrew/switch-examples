@@ -20,7 +20,7 @@ int main(int argc, char **argv)
 		//Scan all the inputs. This should be done once for each frame
 		hidScanInput();
 
-		if (hidKeysDown(CONTROLLER_P1_AUTO) & KEY_PLUS) break;
+		if (hidKeysDown(CONTROLLER_P1_AUTO) & KEY_PLUS) break; // break in order to return to hbmenu
 
 		gfxFlushBuffers();
 		gfxSwapBuffers();
