@@ -6,6 +6,7 @@
 
 #define SAMPLERATE 48000
 #define SAMPLESPERBUF (SAMPLERATE / 10)
+#define BYTESPERSAMPLE 4
 
 void fill_audio_buffer(void* audio_buffer, size_t offset, size_t size, int frequency) {
     u32* dest = (u32*) audio_buffer;
@@ -31,9 +32,9 @@ int main(int argc, char **argv)
         14080,
         7040, 3520, 1760, 880, 440
     };
-
-    u32 raw_data[SAMPLESPERBUF * 2];
-    fill_audio_buffer(raw_data, 0, SAMPLESPERBUF * 2, notefreq[4]);
+    
+    // Make sure the sample buffer is aligned to 0x1000 bytes
+    u8 raw_data[((SAMPLESPERBUF * BYTESPERSAMPLE * 2) + 0xfff) & ~0xfff];
 
     gfxInitDefault();
 
@@ -151,8 +152,11 @@ int main(int argc, char **argv)
             source_buffer.data_offset = 0;
         
             // Play this buffer once.
-            audoutPlayBuffer(&source_buffer, &released_buffer);
+            rc = audoutPlayBuffer(&source_buffer, &released_buffer);
             play_tone = false;
+            
+            if (!R_SUCCEEDED(rc))
+                printf("audoutPlayBuffer() returned 0x%x\n", rc);
         }
         
         gfxFlushBuffers();
