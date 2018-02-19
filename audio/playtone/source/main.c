@@ -8,6 +8,11 @@
 #define SAMPLESPERBUF (SAMPLERATE / 10)
 #define BYTESPERSAMPLE 4
 
+typedef struct {
+    u16 left_ch;
+    u16 right_ch;
+} sample_t;
+
 void fill_audio_buffer(void* audio_buffer, size_t offset, size_t size, int frequency) {
     u32* dest = (u32*) audio_buffer;
 
@@ -34,7 +39,7 @@ int main(int argc, char **argv)
     };
     
     // Make sure the sample buffer is aligned to 0x1000 bytes
-    u8 raw_data[((SAMPLESPERBUF * BYTESPERSAMPLE * 2) + 0xfff) & ~0xfff];
+    sample_t __attribute__((aligned(0x1000))) raw_data[((SAMPLESPERBUF * BYTESPERSAMPLE) + 0xfff) & ~0xfff];
 
     gfxInitDefault();
 
