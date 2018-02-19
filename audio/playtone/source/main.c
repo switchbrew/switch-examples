@@ -69,73 +69,73 @@ int main(int argc, char **argv)
 
         if (kDown & KEY_PLUS) break; // break in order to return to hbmenu
         
-        if (hidKeysDown(CONTROLLER_P1_AUTO) & KEY_A)
+        if (kDown & KEY_A)
         {
             fill_audio_buffer(raw_data, 0, SAMPLESPERBUF * 2, notefreq[0]);
             play_tone = true;
         }
         
-        if (hidKeysDown(CONTROLLER_P1_AUTO) & KEY_B)
+        if (kDown & KEY_B)
         {
             fill_audio_buffer(raw_data, 0, SAMPLESPERBUF * 2, notefreq[1]);
             play_tone = true;
         }
         
-        if (hidKeysDown(CONTROLLER_P1_AUTO) & KEY_Y)
+        if (kDown & KEY_Y)
         {
             fill_audio_buffer(raw_data, 0, SAMPLESPERBUF * 2, notefreq[2]);
             play_tone = true;
         }
         
-        if (hidKeysDown(CONTROLLER_P1_AUTO) & KEY_X)
+        if (kDown & KEY_X)
         {
             fill_audio_buffer(raw_data, 0, SAMPLESPERBUF * 2, notefreq[3]);
             play_tone = true;
         }
         
-        if (hidKeysDown(CONTROLLER_P1_AUTO) & KEY_DLEFT)
+        if (kDown & KEY_DLEFT)
         {
             fill_audio_buffer(raw_data, 0, SAMPLESPERBUF * 2, notefreq[4]);
             play_tone = true;
         }
         
-        if (hidKeysDown(CONTROLLER_P1_AUTO) & KEY_DUP)
+        if (kDown & KEY_DUP)
         {
             fill_audio_buffer(raw_data, 0, SAMPLESPERBUF * 2, notefreq[5]);
             play_tone = true;
         }
         
-        if (hidKeysDown(CONTROLLER_P1_AUTO) & KEY_DRIGHT)
+        if (kDown & KEY_DRIGHT)
         {
             fill_audio_buffer(raw_data, 0, SAMPLESPERBUF * 2, notefreq[6]);
             play_tone = true;
         }
         
-        if (hidKeysDown(CONTROLLER_P1_AUTO) & KEY_DDOWN)
+        if (kDown & KEY_DDOWN)
         {
             fill_audio_buffer(raw_data, 0, SAMPLESPERBUF * 2, notefreq[7]);
             play_tone = true;
         }
         
-        if (hidKeysDown(CONTROLLER_P1_AUTO) & KEY_L)
+        if (kDown & KEY_L)
         {
             fill_audio_buffer(raw_data, 0, SAMPLESPERBUF * 2, notefreq[8]);
             play_tone = true;
         }
         
-        if (hidKeysDown(CONTROLLER_P1_AUTO) & KEY_R)
+        if (kDown & KEY_R)
         {
             fill_audio_buffer(raw_data, 0, SAMPLESPERBUF * 2, notefreq[9]);
             play_tone = true;
         }
         
-        if (hidKeysDown(CONTROLLER_P1_AUTO) & KEY_ZL)
+        if (kDown & KEY_ZL)
         {
             fill_audio_buffer(raw_data, 0, SAMPLESPERBUF * 2, notefreq[10]);
             play_tone = true;
         }
         
-        if (hidKeysDown(CONTROLLER_P1_AUTO) & KEY_ZR)
+        if (kDown & KEY_ZR)
         {
             fill_audio_buffer(raw_data, 0, SAMPLESPERBUF * 2, notefreq[11]);
             play_tone = true;
