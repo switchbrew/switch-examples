@@ -1,15 +1,18 @@
 #include <string.h>
 #include <stdio.h>
+#include <malloc.h>
 #include <math.h>
 
 #include <switch.h>
 
 #define SAMPLERATE 48000
 #define SAMPLESPERBUF (SAMPLERATE / 10)
+#define BYTESPERSAMPLE 4
 
 void fill_audio_buffer(void* audio_buffer, size_t offset, size_t size, int frequency) {
+    if (audio_buffer == NULL) return;
+    
     u32* dest = (u32*) audio_buffer;
-
     for (int i = 0; i < size; i++) {
         // This is a simple sine wave, with a frequency of `frequency` Hz, and an amplitude 30% of maximum.
         s16 sample = 0.3 * 0x7FFF * sin(frequency * (2 * M_PI) * (offset + i) / SAMPLERATE);
@@ -31,19 +34,34 @@ int main(int argc, char **argv)
         14080,
         7040, 3520, 1760, 880, 440
     };
-
-    u32 raw_data[SAMPLESPERBUF * 2];
-    fill_audio_buffer(raw_data, 0, SAMPLESPERBUF * 2, notefreq[4]);
-
+    
     gfxInitDefault();
 
     // Initialize console. Using NULL as the second argument tells the console library to use the internal console structure as current one.
     consoleInit(NULL);
-
-    // Initialize the default audio output device
-    rc = audoutInitialize();
-    printf("audoutInitialize() returned 0x%x\n", rc);
-
+    
+    // Make sure the sample buffer is aligned to 0x1000 bytes
+    u32 raw_data_size = (SAMPLESPERBUF * BYTESPERSAMPLE * 2);
+    u32 raw_data_size_aligned = (raw_data_size + 0xfff) & ~0xfff;
+    u8* raw_data = memalign(0x1000, raw_data_size_aligned);
+    
+    // Ensure buffer was properly allocated
+    if (raw_data == NULL)
+    {
+        rc = MAKERESULT(Module_Libnx, LibnxError_OutOfMemory);
+        printf("Failed to allocate sample data buffer\n");
+    }
+    
+    if (R_SUCCEEDED(rc))
+        memset(raw_data, 0, raw_data_size_aligned);
+    
+    if (R_SUCCEEDED(rc))
+    {
+        // Initialize the default audio output device
+        rc = audoutInitialize();
+        printf("audoutInitialize() returned 0x%x\n", rc);
+    }
+    
     if (R_SUCCEEDED(rc))
     {
         printf("Sample rate: 0x%x\n", audoutGetSampleRate());
@@ -141,18 +159,21 @@ int main(int argc, char **argv)
             play_tone = true;
         }
         
-        if (play_tone)
+        if (R_SUCCEEDED(rc) && play_tone)
         {
             // Prepare the audio data source buffer.
             source_buffer.next = 0;
             source_buffer.buffer = raw_data;
-            source_buffer.buffer_size = sizeof(raw_data);
+            source_buffer.buffer_size = raw_data_size;
             source_buffer.data_size = SAMPLESPERBUF * 2;
             source_buffer.data_offset = 0;
-        
+            
             // Play this buffer once.
-            audoutPlayBuffer(&source_buffer, &released_buffer);
+            rc = audoutPlayBuffer(&source_buffer, &released_buffer);
             play_tone = false;
+            
+            if (!R_SUCCEEDED(rc))
+                printf("audoutPlayBuffer() returned 0x%x\n", rc);
         }
         
         gfxFlushBuffers();
