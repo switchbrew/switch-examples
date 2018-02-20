@@ -35,15 +35,16 @@ int main(int argc, char **argv)
     };
     
     // Make sure the sample buffer is aligned to 0x1000 bytes
-    u32 raw_data_size = ((SAMPLESPERBUF * BYTESPERSAMPLE * 2) + 0xfff) & ~0xfff;
-    u8* raw_data = memalign(0x1000, raw_data_size);
+    u32 raw_data_size = (SAMPLESPERBUF * BYTESPERSAMPLE * 2);
+    u32 raw_data_size_aligned = (raw_data_size + 0xfff) & ~0xfff;
+    u8* raw_data = memalign(0x1000, raw_data_size_aligned);
     
     // Ensure buffer was properly allocated
     if (raw_data == NULL)
         fatalSimple(MAKERESULT(Module_Libnx, LibnxError_OutOfMemory));
     
     // Clear the buffer
-    memset(raw_data, 0, raw_data_size);
+    memset(raw_data, 0, raw_data_size_aligned);
 
     gfxInitDefault();
 
