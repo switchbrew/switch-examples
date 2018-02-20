@@ -1,5 +1,6 @@
 #include <string.h>
 #include <stdio.h>
+#include <malloc.h>
 #include <math.h>
 
 #include <switch.h>
@@ -7,11 +8,6 @@
 #define SAMPLERATE 48000
 #define SAMPLESPERBUF (SAMPLERATE / 10)
 #define BYTESPERSAMPLE 4
-
-typedef struct {
-    u16 left_ch;
-    u16 right_ch;
-} sample_t;
 
 void fill_audio_buffer(void* audio_buffer, size_t offset, size_t size, int frequency) {
     u32* dest = (u32*) audio_buffer;
@@ -39,7 +35,15 @@ int main(int argc, char **argv)
     };
     
     // Make sure the sample buffer is aligned to 0x1000 bytes
-    sample_t __attribute__((aligned(0x1000))) raw_data[((SAMPLESPERBUF * BYTESPERSAMPLE) + 0xfff) & ~0xfff];
+    u32 raw_data_size = ((SAMPLESPERBUF * BYTESPERSAMPLE * 2) + 0xfff) & ~0xfff;
+    u8* raw_data = memalign(0x1000, raw_data_size);
+    
+    // Ensure buffer was properly allocated
+    if (raw_data == NULL)
+        fatalSimple(MAKERESULT(Module_Libnx, LibnxError_OutOfMemory));
+    
+    // Clear the buffer
+    memset(raw_data, 0, raw_data_size);
 
     gfxInitDefault();
 
@@ -152,10 +156,10 @@ int main(int argc, char **argv)
             // Prepare the audio data source buffer.
             source_buffer.next = 0;
             source_buffer.buffer = raw_data;
-            source_buffer.buffer_size = sizeof(raw_data);
+            source_buffer.buffer_size = raw_data_size;
             source_buffer.data_size = SAMPLESPERBUF * 2;
             source_buffer.data_offset = 0;
-        
+            
             // Play this buffer once.
             rc = audoutPlayBuffer(&source_buffer, &released_buffer);
             play_tone = false;
