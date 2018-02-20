@@ -172,7 +172,7 @@ int main(int argc, char **argv)
             rc = audoutPlayBuffer(&source_buffer, &released_buffer);
             play_tone = false;
             
-            if (!R_SUCCEEDED(rc))
+            if (R_FAILED(rc))
                 printf("audoutPlayBuffer() returned 0x%x\n", rc);
         }
         
