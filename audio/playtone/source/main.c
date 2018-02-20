@@ -10,8 +10,9 @@
 #define BYTESPERSAMPLE 4
 
 void fill_audio_buffer(void* audio_buffer, size_t offset, size_t size, int frequency) {
+    if (audio_buffer == NULL) return;
+    
     u32* dest = (u32*) audio_buffer;
-
     for (int i = 0; i < size; i++) {
         // This is a simple sine wave, with a frequency of `frequency` Hz, and an amplitude 30% of maximum.
         s16 sample = 0.3 * 0x7FFF * sin(frequency * (2 * M_PI) * (offset + i) / SAMPLERATE);
@@ -34,6 +35,11 @@ int main(int argc, char **argv)
         7040, 3520, 1760, 880, 440
     };
     
+    gfxInitDefault();
+
+    // Initialize console. Using NULL as the second argument tells the console library to use the internal console structure as current one.
+    consoleInit(NULL);
+    
     // Make sure the sample buffer is aligned to 0x1000 bytes
     u32 raw_data_size = (SAMPLESPERBUF * BYTESPERSAMPLE * 2);
     u32 raw_data_size_aligned = (raw_data_size + 0xfff) & ~0xfff;
@@ -41,20 +47,21 @@ int main(int argc, char **argv)
     
     // Ensure buffer was properly allocated
     if (raw_data == NULL)
-        fatalSimple(MAKERESULT(Module_Libnx, LibnxError_OutOfMemory));
+    {
+        rc = MAKERESULT(Module_Libnx, LibnxError_OutOfMemory);
+        printf("Failed to allocate sample data buffer\n");
+    }
     
-    // Clear the buffer
-    memset(raw_data, 0, raw_data_size_aligned);
-
-    gfxInitDefault();
-
-    // Initialize console. Using NULL as the second argument tells the console library to use the internal console structure as current one.
-    consoleInit(NULL);
-
-    // Initialize the default audio output device
-    rc = audoutInitialize();
-    printf("audoutInitialize() returned 0x%x\n", rc);
-
+    if (R_SUCCEEDED(rc))
+        memset(raw_data, 0, raw_data_size_aligned);
+    
+    if (R_SUCCEEDED(rc))
+    {
+        // Initialize the default audio output device
+        rc = audoutInitialize();
+        printf("audoutInitialize() returned 0x%x\n", rc);
+    }
+    
     if (R_SUCCEEDED(rc))
     {
         printf("Sample rate: 0x%x\n", audoutGetSampleRate());
@@ -152,7 +159,7 @@ int main(int argc, char **argv)
             play_tone = true;
         }
         
-        if (play_tone)
+        if (R_SUCCEEDED(rc) && play_tone)
         {
             // Prepare the audio data source buffer.
             source_buffer.next = 0;
