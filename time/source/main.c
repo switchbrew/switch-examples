@@ -44,7 +44,7 @@ int main(int argc, char **argv)
 	gfxInitDefault();
 	consoleInit(NULL);
 
-	printf("\x1b[16;16HPress Start to exit.");
+	printf("\x1b[16;16HPress PLUS to exit.");
 
 	// Main loop
 	while(appletMainLoop())
