@@ -10,184 +10,184 @@
 #define BYTESPERSAMPLE 4
 
 void fill_audio_buffer(void* audio_buffer, size_t offset, size_t size, int frequency) {
-    if (audio_buffer == NULL) return;
-    
-    u32* dest = (u32*) audio_buffer;
-    for (int i = 0; i < size; i++) {
-        // This is a simple sine wave, with a frequency of `frequency` Hz, and an amplitude 30% of maximum.
-        s16 sample = 0.3 * 0x7FFF * sin(frequency * (2 * M_PI) * (offset + i) / SAMPLERATE);
+	if (audio_buffer == NULL) return;
+	
+	u32* dest = (u32*) audio_buffer;
+	for (int i = 0; i < size; i++) {
+		// This is a simple sine wave, with a frequency of `frequency` Hz, and an amplitude 30% of maximum.
+		s16 sample = 0.3 * 0x7FFF * sin(frequency * (2 * M_PI) * (offset + i) / SAMPLERATE);
 
-        // Stereo samples are interleaved: left and right channels.
-        dest[i] = (sample << 16) | (sample & 0xffff);
-    }
+		// Stereo samples are interleaved: left and right channels.
+		dest[i] = (sample << 16) | (sample & 0xffff);
+	}
 }
 
 int main(int argc, char **argv)
 {
-    Result rc = 0;
-    AudioOutBuffer source_buffer;
-    AudioOutBuffer released_buffer;
-    
-    int notefreq[] = {
-        220,
-        440, 880, 1760, 3520, 7040,
-        14080,
-        7040, 3520, 1760, 880, 440
-    };
-    
-    gfxInitDefault();
+	Result rc = 0;
+	AudioOutBuffer source_buffer;
+	AudioOutBuffer released_buffer;
+	
+	int notefreq[] = {
+		220,
+		440, 880, 1760, 3520, 7040,
+		14080,
+		7040, 3520, 1760, 880, 440
+	};
+	
+	gfxInitDefault();
 
-    // Initialize console. Using NULL as the second argument tells the console library to use the internal console structure as current one.
-    consoleInit(NULL);
-    
-    // Make sure the sample buffer is aligned to 0x1000 bytes
-    u32 raw_data_size = (SAMPLESPERBUF * BYTESPERSAMPLE * 2);
-    u32 raw_data_size_aligned = (raw_data_size + 0xfff) & ~0xfff;
-    u8* raw_data = memalign(0x1000, raw_data_size_aligned);
-    
-    // Ensure buffer was properly allocated
-    if (raw_data == NULL)
-    {
-        rc = MAKERESULT(Module_Libnx, LibnxError_OutOfMemory);
-        printf("Failed to allocate sample data buffer\n");
-    }
-    
-    if (R_SUCCEEDED(rc))
-        memset(raw_data, 0, raw_data_size_aligned);
-    
-    if (R_SUCCEEDED(rc))
-    {
-        // Initialize the default audio output device
-        rc = audoutInitialize();
-        printf("audoutInitialize() returned 0x%x\n", rc);
-    }
-    
-    if (R_SUCCEEDED(rc))
-    {
-        printf("Sample rate: 0x%x\n", audoutGetSampleRate());
-        printf("Channel count: 0x%x\n", audoutGetChannelCount());
-        printf("PCM format: 0x%x\n", audoutGetPcmFormat());
-        printf("Device state: 0x%x\n", audoutGetDeviceState());
-        
-        // Start audio playback.
-        rc = audoutStartAudioOut();
-        printf("audoutStartAudioOut() returned 0x%x\n", rc);
-    }
-    
-    bool play_tone = false;
-    printf("Press A, B, Y, X, Left, Up, Right, Down, L, R, ZL or ZR to play a different tone.\n");
-    
-    while (appletMainLoop())
-    {
-        //Scan all the inputs. This should be done once for each frame
-        hidScanInput();
+	// Initialize console. Using NULL as the second argument tells the console library to use the internal console structure as current one.
+	consoleInit(NULL);
+	
+	// Make sure the sample buffer is aligned to 0x1000 bytes
+	u32 raw_data_size = (SAMPLESPERBUF * BYTESPERSAMPLE * 2);
+	u32 raw_data_size_aligned = (raw_data_size + 0xfff) & ~0xfff;
+	u8* raw_data = memalign(0x1000, raw_data_size_aligned);
+	
+	// Ensure buffer was properly allocated
+	if (raw_data == NULL)
+	{
+		rc = MAKERESULT(Module_Libnx, LibnxError_OutOfMemory);
+		printf("Failed to allocate sample data buffer\n");
+	}
+	
+	if (R_SUCCEEDED(rc))
+		memset(raw_data, 0, raw_data_size_aligned);
+	
+	if (R_SUCCEEDED(rc))
+	{
+		// Initialize the default audio output device
+		rc = audoutInitialize();
+		printf("audoutInitialize() returned 0x%x\n", rc);
+	}
+	
+	if (R_SUCCEEDED(rc))
+	{
+		printf("Sample rate: 0x%x\n", audoutGetSampleRate());
+		printf("Channel count: 0x%x\n", audoutGetChannelCount());
+		printf("PCM format: 0x%x\n", audoutGetPcmFormat());
+		printf("Device state: 0x%x\n", audoutGetDeviceState());
+		
+		// Start audio playback.
+		rc = audoutStartAudioOut();
+		printf("audoutStartAudioOut() returned 0x%x\n", rc);
+	}
+	
+	bool play_tone = false;
+	printf("Press A, B, Y, X, Left, Up, Right, Down, L, R, ZL or ZR to play a different tone.\n");
+	
+	while (appletMainLoop())
+	{
+		//Scan all the inputs. This should be done once for each frame
+		hidScanInput();
 
-        //hidKeysDown returns information about which buttons have been just pressed (and they weren't in the previous frame)
-        u32 kDown = hidKeysDown(CONTROLLER_P1_AUTO);
+		//hidKeysDown returns information about which buttons have been just pressed (and they weren't in the previous frame)
+		u32 kDown = hidKeysDown(CONTROLLER_P1_AUTO);
 
-        if (kDown & KEY_PLUS) break; // break in order to return to hbmenu
-        
-        if (kDown & KEY_A)
-        {
-            fill_audio_buffer(raw_data, 0, SAMPLESPERBUF * 2, notefreq[0]);
-            play_tone = true;
-        }
-        
-        if (kDown & KEY_B)
-        {
-            fill_audio_buffer(raw_data, 0, SAMPLESPERBUF * 2, notefreq[1]);
-            play_tone = true;
-        }
-        
-        if (kDown & KEY_Y)
-        {
-            fill_audio_buffer(raw_data, 0, SAMPLESPERBUF * 2, notefreq[2]);
-            play_tone = true;
-        }
-        
-        if (kDown & KEY_X)
-        {
-            fill_audio_buffer(raw_data, 0, SAMPLESPERBUF * 2, notefreq[3]);
-            play_tone = true;
-        }
-        
-        if (kDown & KEY_DLEFT)
-        {
-            fill_audio_buffer(raw_data, 0, SAMPLESPERBUF * 2, notefreq[4]);
-            play_tone = true;
-        }
-        
-        if (kDown & KEY_DUP)
-        {
-            fill_audio_buffer(raw_data, 0, SAMPLESPERBUF * 2, notefreq[5]);
-            play_tone = true;
-        }
-        
-        if (kDown & KEY_DRIGHT)
-        {
-            fill_audio_buffer(raw_data, 0, SAMPLESPERBUF * 2, notefreq[6]);
-            play_tone = true;
-        }
-        
-        if (kDown & KEY_DDOWN)
-        {
-            fill_audio_buffer(raw_data, 0, SAMPLESPERBUF * 2, notefreq[7]);
-            play_tone = true;
-        }
-        
-        if (kDown & KEY_L)
-        {
-            fill_audio_buffer(raw_data, 0, SAMPLESPERBUF * 2, notefreq[8]);
-            play_tone = true;
-        }
-        
-        if (kDown & KEY_R)
-        {
-            fill_audio_buffer(raw_data, 0, SAMPLESPERBUF * 2, notefreq[9]);
-            play_tone = true;
-        }
-        
-        if (kDown & KEY_ZL)
-        {
-            fill_audio_buffer(raw_data, 0, SAMPLESPERBUF * 2, notefreq[10]);
-            play_tone = true;
-        }
-        
-        if (kDown & KEY_ZR)
-        {
-            fill_audio_buffer(raw_data, 0, SAMPLESPERBUF * 2, notefreq[11]);
-            play_tone = true;
-        }
-        
-        if (R_SUCCEEDED(rc) && play_tone)
-        {
-            // Prepare the audio data source buffer.
-            source_buffer.next = 0;
-            source_buffer.buffer = raw_data;
-            source_buffer.buffer_size = raw_data_size;
-            source_buffer.data_size = SAMPLESPERBUF * 2;
-            source_buffer.data_offset = 0;
-            
-            // Play this buffer once.
-            rc = audoutPlayBuffer(&source_buffer, &released_buffer);
-            play_tone = false;
-            
-            if (R_FAILED(rc))
-                printf("audoutPlayBuffer() returned 0x%x\n", rc);
-        }
-        
-        gfxFlushBuffers();
-        gfxSwapBuffers();
-        gfxWaitForVsync();
-    }
-    
-    // Stop audio playback.
-    rc = audoutStopAudioOut();
-    printf("audoutStopAudioOut() returned 0x%x\n", rc);
+		if (kDown & KEY_PLUS) break; // break in order to return to hbmenu
+		
+		if (kDown & KEY_A)
+		{
+			fill_audio_buffer(raw_data, 0, SAMPLESPERBUF * 2, notefreq[0]);
+			play_tone = true;
+		}
+		
+		if (kDown & KEY_B)
+		{
+			fill_audio_buffer(raw_data, 0, SAMPLESPERBUF * 2, notefreq[1]);
+			play_tone = true;
+		}
+		
+		if (kDown & KEY_Y)
+		{
+			fill_audio_buffer(raw_data, 0, SAMPLESPERBUF * 2, notefreq[2]);
+			play_tone = true;
+		}
+		
+		if (kDown & KEY_X)
+		{
+			fill_audio_buffer(raw_data, 0, SAMPLESPERBUF * 2, notefreq[3]);
+			play_tone = true;
+		}
+		
+		if (kDown & KEY_DLEFT)
+		{
+			fill_audio_buffer(raw_data, 0, SAMPLESPERBUF * 2, notefreq[4]);
+			play_tone = true;
+		}
+		
+		if (kDown & KEY_DUP)
+		{
+			fill_audio_buffer(raw_data, 0, SAMPLESPERBUF * 2, notefreq[5]);
+			play_tone = true;
+		}
+		
+		if (kDown & KEY_DRIGHT)
+		{
+			fill_audio_buffer(raw_data, 0, SAMPLESPERBUF * 2, notefreq[6]);
+			play_tone = true;
+		}
+		
+		if (kDown & KEY_DDOWN)
+		{
+			fill_audio_buffer(raw_data, 0, SAMPLESPERBUF * 2, notefreq[7]);
+			play_tone = true;
+		}
+		
+		if (kDown & KEY_L)
+		{
+			fill_audio_buffer(raw_data, 0, SAMPLESPERBUF * 2, notefreq[8]);
+			play_tone = true;
+		}
+		
+		if (kDown & KEY_R)
+		{
+			fill_audio_buffer(raw_data, 0, SAMPLESPERBUF * 2, notefreq[9]);
+			play_tone = true;
+		}
+		
+		if (kDown & KEY_ZL)
+		{
+			fill_audio_buffer(raw_data, 0, SAMPLESPERBUF * 2, notefreq[10]);
+			play_tone = true;
+		}
+		
+		if (kDown & KEY_ZR)
+		{
+			fill_audio_buffer(raw_data, 0, SAMPLESPERBUF * 2, notefreq[11]);
+			play_tone = true;
+		}
+		
+		if (R_SUCCEEDED(rc) && play_tone)
+		{
+			// Prepare the audio data source buffer.
+			source_buffer.next = 0;
+			source_buffer.buffer = raw_data;
+			source_buffer.buffer_size = raw_data_size;
+			source_buffer.data_size = SAMPLESPERBUF * 2;
+			source_buffer.data_offset = 0;
+			
+			// Play this buffer once.
+			rc = audoutPlayBuffer(&source_buffer, &released_buffer);
+			play_tone = false;
+			
+			if (R_FAILED(rc))
+				printf("audoutPlayBuffer() returned 0x%x\n", rc);
+		}
+		
+		gfxFlushBuffers();
+		gfxSwapBuffers();
+		gfxWaitForVsync();
+	}
+	
+	// Stop audio playback.
+	rc = audoutStopAudioOut();
+	printf("audoutStopAudioOut() returned 0x%x\n", rc);
 
-    // Terminate the default audio output device.
-    audoutExit();
-    
-    gfxExit();
-    return 0;
+	// Terminate the default audio output device.
+	audoutExit();
+	
+	gfxExit();
+	return 0;
 }
