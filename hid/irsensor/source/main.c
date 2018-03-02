@@ -1,22 +1,42 @@
 #include <string.h>
 #include <stdio.h>
+#include <malloc.h>
 
 #include <switch.h>
 
 //TODO: Implement image-transfer in libnx and in this example.
 
+u8 *ir_buffer = NULL;
+
 int main(int argc, char **argv)
 {
 	Result rc=0;
 	u32 irhandle=0;
+	irsImageTransferProcessorConfig config;
+	irsImageTransferProcessorState state;
+	size_t ir_buffer_size = 0x100000;
 
 	gfxInitDefault();
 
 	//Initialize console. Using NULL as the second argument tells the console library to use the internal console structure as current one.
 	consoleInit(NULL);
 
-	rc = irsInitialize();
-	printf("irsInitialize() returned 0x%x\n", rc);
+	ir_buffer = (u8*)malloc(ir_buffer_size);
+	if (ir_buffer==NULL)
+	{
+		rc = MAKERESULT(Module_Libnx, LibnxError_OutOfMemory);
+		printf("Failed to allocate memory for ir_buffer.\n");
+	}
+	else
+	{
+		memset(ir_buffer, 0, ir_buffer_size);
+	}
+
+	if (R_SUCCEEDED(rc))
+	{
+		rc = irsInitialize();
+		printf("irsInitialize() returned 0x%x\n", rc);
+	}
 
 	if (R_SUCCEEDED(rc))
 	{
@@ -28,6 +48,20 @@ int main(int argc, char **argv)
 	{
 		rc = irsGetIrCameraHandle(&irhandle, CONTROLLER_PLAYER_1);
 		printf("irsGetIrCameraHandle() returned 0x%x\n", rc);
+	}
+
+	if (R_SUCCEEDED(rc))
+	{
+		irsGetDefaultImageTransferProcessorConfig(&config);
+		rc = irsRunImageTransferProcessor(irhandle, &config, 0x100000);
+		printf("irsRunImageTransferProcessor() returned 0x%x\n", rc);
+	}
+
+	if (R_SUCCEEDED(rc))
+	{
+		//TODO: Why does this fail?
+		rc = irsGetImageTransferProcessorState(irhandle, ir_buffer, ir_buffer_size, &state);
+		printf("irsGetImageTransferProcessorState() returned 0x%x\n", rc);
 	}
 
 	while(appletMainLoop())
@@ -45,7 +79,10 @@ int main(int argc, char **argv)
 		gfxWaitForVsync();
 	}
 
+	irsStopImageProcessor(irhandle);
 	irsExit();
+
+	free(ir_buffer);
 
 	gfxExit();
 	return 0;
