@@ -4,8 +4,6 @@
 
 #include <switch.h>
 
-//TODO: Implement image-transfer in libnx and in this example.
-
 u8 *ir_buffer = NULL;
 
 int main(int argc, char **argv)
@@ -14,7 +12,7 @@ int main(int argc, char **argv)
 	u32 irhandle=0;
 	irsImageTransferProcessorConfig config;
 	irsImageTransferProcessorState state;
-	size_t ir_buffer_size = 0x100000;
+	size_t ir_buffer_size = 0x12c00;
 
 	gfxInitDefault();
 
@@ -59,7 +57,7 @@ int main(int argc, char **argv)
 
 	if (R_SUCCEEDED(rc))
 	{
-		//TODO: Why does this fail?
+		//TODO: Why does this fail? Maybe we need to use certain hid-serv cmd(s)?
 		rc = irsGetImageTransferProcessorState(irhandle, ir_buffer, ir_buffer_size, &state);
 		printf("irsGetImageTransferProcessorState() returned 0x%x\n", rc);
 	}
