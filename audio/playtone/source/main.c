@@ -6,8 +6,10 @@
 #include <switch.h>
 
 #define SAMPLERATE 48000
-#define SAMPLESPERBUF (SAMPLERATE / 10)
-#define BYTESPERSAMPLE 4
+#define CHANNELCOUNT 2
+#define FRAMERATE (1000 / 30)
+#define SAMPLECOUNT (SAMPLERATE / FRAMERATE)
+#define BYTESPERSAMPLE 2
 
 void fill_audio_buffer(void* audio_buffer, size_t offset, size_t size, int frequency) {
 	if (audio_buffer == NULL) return;
@@ -25,8 +27,6 @@ void fill_audio_buffer(void* audio_buffer, size_t offset, size_t size, int frequ
 int main(int argc, char **argv)
 {
 	Result rc = 0;
-	AudioOutBuffer source_buffer;
-	AudioOutBuffer released_buffer;
 	
 	int notefreq[] = {
 		220,
@@ -40,24 +40,29 @@ int main(int argc, char **argv)
 	// Initialize console. Using NULL as the second argument tells the console library to use the internal console structure as current one.
 	consoleInit(NULL);
 	
-	// Make sure the sample buffer is aligned to 0x1000 bytes
-	u32 raw_data_size = (SAMPLESPERBUF * BYTESPERSAMPLE * 2);
-	u32 raw_data_size_aligned = (raw_data_size + 0xfff) & ~0xfff;
-	u8* raw_data = memalign(0x1000, raw_data_size_aligned);
+	AudioOutBuffer audout_buf;
+	AudioOutBuffer *audout_released_buf;
 	
-	// Ensure buffer was properly allocated
-	if (raw_data == NULL)
+	// Make sure the sample buffer size is aligned to 0x1000 bytes.
+	u32 data_size = (SAMPLECOUNT * CHANNELCOUNT * BYTESPERSAMPLE);
+	u32 buffer_size = (data_size + 0xfff) & ~0xfff;
+	
+	// Allocate the buffer.
+	u8* out_buf_data = memalign(0x1000, buffer_size);
+	
+	// Ensure buffers were properly allocated.
+	if (out_buf_data == NULL)
 	{
 		rc = MAKERESULT(Module_Libnx, LibnxError_OutOfMemory);
-		printf("Failed to allocate sample data buffer\n");
+		printf("Failed to allocate sample data buffers\n");
 	}
 	
 	if (R_SUCCEEDED(rc))
-		memset(raw_data, 0, raw_data_size_aligned);
+		memset(out_buf_data, 0, buffer_size);
 	
 	if (R_SUCCEEDED(rc))
 	{
-		// Initialize the default audio output device
+		// Initialize the default audio output device.
 		rc = audoutInitialize();
 		printf("audoutInitialize() returned 0x%x\n", rc);
 	}
@@ -89,91 +94,95 @@ int main(int argc, char **argv)
 		
 		if (kDown & KEY_A)
 		{
-			fill_audio_buffer(raw_data, 0, SAMPLESPERBUF * 2, notefreq[0]);
+			fill_audio_buffer(out_buf_data, 0, data_size, notefreq[0]);
 			play_tone = true;
 		}
 		
 		if (kDown & KEY_B)
 		{
-			fill_audio_buffer(raw_data, 0, SAMPLESPERBUF * 2, notefreq[1]);
+			fill_audio_buffer(out_buf_data, 0, data_size, notefreq[1]);
 			play_tone = true;
 		}
 		
 		if (kDown & KEY_Y)
 		{
-			fill_audio_buffer(raw_data, 0, SAMPLESPERBUF * 2, notefreq[2]);
+			fill_audio_buffer(out_buf_data, 0, data_size, notefreq[2]);
 			play_tone = true;
 		}
 		
 		if (kDown & KEY_X)
 		{
-			fill_audio_buffer(raw_data, 0, SAMPLESPERBUF * 2, notefreq[3]);
+			fill_audio_buffer(out_buf_data, 0, data_size, notefreq[3]);
 			play_tone = true;
 		}
 		
 		if (kDown & KEY_DLEFT)
 		{
-			fill_audio_buffer(raw_data, 0, SAMPLESPERBUF * 2, notefreq[4]);
+			fill_audio_buffer(out_buf_data, 0, data_size, notefreq[4]);
 			play_tone = true;
 		}
 		
 		if (kDown & KEY_DUP)
 		{
-			fill_audio_buffer(raw_data, 0, SAMPLESPERBUF * 2, notefreq[5]);
+			fill_audio_buffer(out_buf_data, 0, data_size, notefreq[5]);
 			play_tone = true;
 		}
 		
 		if (kDown & KEY_DRIGHT)
 		{
-			fill_audio_buffer(raw_data, 0, SAMPLESPERBUF * 2, notefreq[6]);
+			fill_audio_buffer(out_buf_data, 0, data_size, notefreq[6]);
 			play_tone = true;
 		}
 		
 		if (kDown & KEY_DDOWN)
 		{
-			fill_audio_buffer(raw_data, 0, SAMPLESPERBUF * 2, notefreq[7]);
+			fill_audio_buffer(out_buf_data, 0, data_size, notefreq[7]);
 			play_tone = true;
 		}
 		
 		if (kDown & KEY_L)
 		{
-			fill_audio_buffer(raw_data, 0, SAMPLESPERBUF * 2, notefreq[8]);
+			fill_audio_buffer(out_buf_data, 0, data_size, notefreq[8]);
 			play_tone = true;
 		}
 		
 		if (kDown & KEY_R)
 		{
-			fill_audio_buffer(raw_data, 0, SAMPLESPERBUF * 2, notefreq[9]);
+			fill_audio_buffer(out_buf_data, 0, data_size, notefreq[9]);
 			play_tone = true;
 		}
 		
 		if (kDown & KEY_ZL)
 		{
-			fill_audio_buffer(raw_data, 0, SAMPLESPERBUF * 2, notefreq[10]);
+			fill_audio_buffer(out_buf_data, 0, data_size, notefreq[10]);
 			play_tone = true;
 		}
 		
 		if (kDown & KEY_ZR)
 		{
-			fill_audio_buffer(raw_data, 0, SAMPLESPERBUF * 2, notefreq[11]);
+			fill_audio_buffer(out_buf_data, 0, data_size, notefreq[11]);
 			play_tone = true;
 		}
 		
 		if (R_SUCCEEDED(rc) && play_tone)
 		{
 			// Prepare the audio data source buffer.
-			source_buffer.next = 0;
-			source_buffer.buffer = raw_data;
-			source_buffer.buffer_size = raw_data_size;
-			source_buffer.data_size = SAMPLESPERBUF * 2;
-			source_buffer.data_offset = 0;
+			audout_buf.next = NULL;
+			audout_buf.buffer = out_buf_data;
+			audout_buf.buffer_size = buffer_size;
+			audout_buf.data_size = data_size;
+			audout_buf.data_offset = 0;
 			
-			// Play this buffer once.
-			rc = audoutPlayBuffer(&source_buffer, &released_buffer);
-			play_tone = false;
+			// Prepare pointer for the released buffer.
+			audout_released_buf = NULL;
+			
+			// Play the buffer.
+			rc = audoutPlayBuffer(&audout_buf, &audout_released_buf);
 			
 			if (R_FAILED(rc))
 				printf("audoutPlayBuffer() returned 0x%x\n", rc);
+			
+			play_tone = false;
 		}
 		
 		gfxFlushBuffers();
