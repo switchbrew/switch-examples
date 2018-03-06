@@ -4,15 +4,23 @@
 
 #include <switch.h>
 
-u8 *ir_buffer = NULL;
+//Joy-con IR-sensor example, displays the image from the IR camera.
+//The Joy-con must be detached from the system.
 
 int main(int argc, char **argv)
 {
 	Result rc=0;
+	Result rc2=0;
 	u32 irhandle=0;
 	irsImageTransferProcessorConfig config;
 	irsImageTransferProcessorState state;
 	size_t ir_buffer_size = 0x12c00;
+	u8 *ir_buffer = NULL;
+
+	u32 width, height;
+	u32 ir_width, ir_height;
+	u32 pos, pos2=0;
+	u32* framebuf;
 
 	gfxInitDefault();
 
@@ -57,9 +65,9 @@ int main(int argc, char **argv)
 
 	if (R_SUCCEEDED(rc))
 	{
-		//TODO: Why does this fail? Maybe we need to use certain hid-serv cmd(s)?
-		rc = irsGetImageTransferProcessorState(irhandle, ir_buffer, ir_buffer_size, &state);
-		printf("irsGetImageTransferProcessorState() returned 0x%x\n", rc);
+		//Switch to using regular framebuffer.
+		consoleClear();
+		gfxSetMode(GfxMode_LinearDouble);
 	}
 
 	while(appletMainLoop())
@@ -71,6 +79,36 @@ int main(int argc, char **argv)
 		u32 kDown = hidKeysDown(CONTROLLER_P1_AUTO);
 
 		if (kDown & KEY_PLUS) break; // break in order to return to hbmenu
+
+		if (R_SUCCEEDED(rc))
+		{
+			framebuf = (u32*) gfxGetFramebuffer((u32*)&width, (u32*)&height);
+
+			//Note that the image is updated every few seconds. Likewise, it takes a few seconds for the initial image to become available.
+			//This will return an error when no image is available yet.
+			rc2 = irsGetImageTransferProcessorState(irhandle, ir_buffer, ir_buffer_size, &state);
+
+			if (R_SUCCEEDED(rc2))
+			{
+				memset(framebuf, 0, gfxGetFramebufferSize());
+
+				//IR image width/height with the default config.
+				//The image is grayscale (1 byte per pixel / 8bits, with 1 color-component).
+				ir_width = 240;
+				ir_height = 320;
+
+				u32 x, y;
+				for (y=0; y<ir_height; y++)//Access the buffer linearly.
+				{
+					for (x=0; x<ir_width; x++)
+					{
+						pos = y * width + x;
+						pos2 = x * ir_height + y;//The IR image/camera is sideways with the joycon held flat.
+						framebuf[pos] = RGBA8_MAXALPHA(/*ir_buffer[pos2]*/0, ir_buffer[pos2], /*ir_buffer[pos2]*/0);
+					}
+				}
+			}
+		}
 
 		gfxFlushBuffers();
 		gfxSwapBuffers();
