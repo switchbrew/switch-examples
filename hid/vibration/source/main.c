@@ -24,12 +24,15 @@ int main(int argc, char **argv)
 
 	if (R_SUCCEEDED(rc)) printf("Hold R to vibrate, and press A/B/X/Y to adjust values.\n");
 
-	VibrationValue.values[0] = 10.0f;
-	VibrationValue.values[1] = 10.0f;
-	VibrationValue.values[2] = 10.0f;
-	VibrationValue.values[3] = 10.0f;
+	VibrationValue.amp_low   = 0.2f;
+	VibrationValue.freq_low  = 10.0f;
+	VibrationValue.amp_high  = 0.2f;
+	VibrationValue.freq_high = 10.0f;
 
 	memset(&VibrationValue_stop, 0, sizeof(HidVibrationValue));
+	// Switch like stop behavior with muted band channels and frequencies set to default.
+	VibrationValue_stop.freq_low  = 160.0f
+	VibrationValue_stop.freq_high = 320.0f
 
 	// Main loop
 	while(appletMainLoop())
@@ -56,10 +59,10 @@ int main(int argc, char **argv)
 			rc2 = hidSendVibrationValue(&VibrationDeviceHandles[1], &VibrationValue);
 			if (R_FAILED(rc2)) printf("hidSendVibrationValue() returned: 0x%x\n", rc2);
 
-			if (kDown & KEY_A) VibrationValue.values[0]+= 1.0f;
-			if (kDown & KEY_B) VibrationValue.values[1]+= 5.0f;
-			if (kDown & KEY_X) VibrationValue.values[2]+= 10.0f;
-			if (kDown & KEY_Y) VibrationValue.values[3]+= 12.0f;
+			if (kDown & KEY_A) VibrationValue.amp_low   += 0.1f;
+			if (kDown & KEY_B) VibrationValue.freq_low  += 5.0f;
+			if (kDown & KEY_X) VibrationValue.amp_high  += 0.1f;
+			if (kDown & KEY_Y) VibrationValue.freq_high += 12.0f;
 		}
 		else if(kUp & KEY_R)//Stop vibration.
 		{
