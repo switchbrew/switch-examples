@@ -9,45 +9,45 @@
 
 int main(int argc, char **argv)
 {
-	gfxInitDefault();
-	consoleInit(NULL);
+    gfxInitDefault();
+    consoleInit(NULL);
 
-	DIR* dir;
-	struct dirent* ent;
+    DIR* dir;
+    struct dirent* ent;
 
-	dir = opendir("");//Open current-working-directory.
-	if(dir==NULL)
-	{
-		printf("Failed to open dir.\n");
-	}
-	else
-	{
-		printf("Dir-listing for '':\n");
-		while ((ent = readdir(dir)))
-		{
-			printf("d_name: %s\n", ent->d_name);
-		}
-		closedir(dir);
-		printf("Done.\n");
-	}
+    dir = opendir("");//Open current-working-directory.
+    if(dir==NULL)
+    {
+        printf("Failed to open dir.\n");
+    }
+    else
+    {
+        printf("Dir-listing for '':\n");
+        while ((ent = readdir(dir)))
+        {
+            printf("d_name: %s\n", ent->d_name);
+        }
+        closedir(dir);
+        printf("Done.\n");
+    }
 
-	// Main loop
-	while(appletMainLoop())
-	{
-		//Scan all the inputs. This should be done once for each frame
-		hidScanInput();
+    // Main loop
+    while(appletMainLoop())
+    {
+        //Scan all the inputs. This should be done once for each frame
+        hidScanInput();
 
-		//hidKeysDown returns information about which buttons have been just pressed (and they weren't in the previous frame)
-		u32 kDown = hidKeysDown(CONTROLLER_P1_AUTO);
+        //hidKeysDown returns information about which buttons have been just pressed (and they weren't in the previous frame)
+        u32 kDown = hidKeysDown(CONTROLLER_P1_AUTO);
 
-		if (kDown & KEY_PLUS) break; // break in order to return to hbmenu
+        if (kDown & KEY_PLUS) break; // break in order to return to hbmenu
 
-		gfxFlushBuffers();
-		gfxSwapBuffers();
-		gfxWaitForVsync();
-	}
+        gfxFlushBuffers();
+        gfxSwapBuffers();
+        gfxWaitForVsync();
+    }
 
-	gfxExit();
-	return 0;
+    gfxExit();
+    return 0;
 }
 

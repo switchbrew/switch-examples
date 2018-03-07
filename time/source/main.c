@@ -10,43 +10,43 @@ const char* const weekDays[7] = {"Sunday", "Monday", "Tuesday", "Wednesday", "Th
 
 int main(int argc, char **argv)
 {
-	gfxInitDefault();
-	consoleInit(NULL);
+    gfxInitDefault();
+    consoleInit(NULL);
 
-	printf("\x1b[16;16HPress PLUS to exit.");
+    printf("\x1b[16;16HPress PLUS to exit.");
 
-	// Main loop
-	while(appletMainLoop())
-	{
-		//Scan all the inputs. This should be done once for each frame
-		hidScanInput();
+    // Main loop
+    while(appletMainLoop())
+    {
+        //Scan all the inputs. This should be done once for each frame
+        hidScanInput();
 
-		//hidKeysDown returns information about which buttons have been just pressed (and they weren't in the previous frame)
-		u32 kDown = hidKeysDown(CONTROLLER_P1_AUTO);
+        //hidKeysDown returns information about which buttons have been just pressed (and they weren't in the previous frame)
+        u32 kDown = hidKeysDown(CONTROLLER_P1_AUTO);
 
-		if (kDown & KEY_PLUS) break; // break in order to return to hbmenu
+        if (kDown & KEY_PLUS) break; // break in order to return to hbmenu
 
-		//Print current time
-		time_t unixTime = time(NULL);
-		struct tm* timeStruct = gmtime((const time_t *)&unixTime);//Gets UTC time. Currently localtime() will also return UTC (timezones not supported).
+        //Print current time
+        time_t unixTime = time(NULL);
+        struct tm* timeStruct = gmtime((const time_t *)&unixTime);//Gets UTC time. Currently localtime() will also return UTC (timezones not supported).
 
-		int hours = timeStruct->tm_hour;
-		int minutes = timeStruct->tm_min;
-		int seconds = timeStruct->tm_sec;
-		int day = timeStruct->tm_mday;
-		int month = timeStruct->tm_mon;
-		int year = timeStruct->tm_year +1900;
-		int wday = timeStruct->tm_wday;
+        int hours = timeStruct->tm_hour;
+        int minutes = timeStruct->tm_min;
+        int seconds = timeStruct->tm_sec;
+        int day = timeStruct->tm_mday;
+        int month = timeStruct->tm_mon;
+        int year = timeStruct->tm_year +1900;
+        int wday = timeStruct->tm_wday;
 
-		printf("\x1b[1;1H%02i:%02i:%02i", hours, minutes, seconds);
-		printf("\n%s %s %i %i", weekDays[wday], months[month], day, year);
+        printf("\x1b[1;1H%02i:%02i:%02i", hours, minutes, seconds);
+        printf("\n%s %s %i %i", weekDays[wday], months[month], day, year);
 
-		gfxFlushBuffers();
-		gfxSwapBuffers();
-		gfxWaitForVsync();
-	}
+        gfxFlushBuffers();
+        gfxSwapBuffers();
+        gfxWaitForVsync();
+    }
 
-	gfxExit();
-	return 0;
+    gfxExit();
+    return 0;
 }
 
