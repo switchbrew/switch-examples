@@ -21,7 +21,7 @@ int main(int argc, char **argv)
 	rc = hidInitializeVibrationDevice(&VibrationDeviceHandle, CONTROLLER_PLAYER_1, LAYOUT_DEFAULT);
 	printf("hidInitializeVibrationDevice() returned: 0x%x\n", rc);
 
-	if (R_SUCCEEDED(rc)) printf("Press A to vibrate.\n");
+	if (R_SUCCEEDED(rc)) printf("Hold R to vibrate, and press A/B/X/Y to adjust values.\n");
 
 	VibrationValue.values[0] = 10.0f;
 	VibrationValue.values[1] = 10.0f;
