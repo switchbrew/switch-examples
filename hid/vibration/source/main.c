@@ -31,8 +31,8 @@ int main(int argc, char **argv)
 
 	memset(&VibrationValue_stop, 0, sizeof(HidVibrationValue));
 	// Switch like stop behavior with muted band channels and frequencies set to default.
-	VibrationValue_stop.freq_low  = 160.0f
-	VibrationValue_stop.freq_high = 320.0f
+	VibrationValue_stop.freq_low  = 160.0f;
+        VibrationValue_stop.freq_high = 320.0f;
 
 	// Main loop
 	while(appletMainLoop())
