@@ -7,7 +7,7 @@
 
 int main(int argc, char **argv)
 {
-	u32 VibrationDeviceHandle=0;
+	u32 VibrationDeviceHandles[2];
 	Result rc = 0, rc2 = 0;
 
 	HidVibrationValue VibrationValue;
@@ -18,7 +18,8 @@ int main(int argc, char **argv)
 
 	printf("Press PLUS to exit.\n");
 
-	rc = hidInitializeVibrationDevice(&VibrationDeviceHandle, CONTROLLER_PLAYER_1, LAYOUT_DEFAULT);
+	//Two VibrationDeviceHandles are returned: first one for left-joycon, second one for right-joycon.
+	rc = hidInitializeVibrationDevices(VibrationDeviceHandles, 2, CONTROLLER_PLAYER_1, LAYOUT_DEFAULT);
 	printf("hidInitializeVibrationDevice() returned: 0x%x\n", rc);
 
 	if (R_SUCCEEDED(rc)) printf("Hold R to vibrate, and press A/B/X/Y to adjust values.\n");
@@ -45,7 +46,14 @@ int main(int argc, char **argv)
 
 		if (R_SUCCEEDED(rc) && (kHeld & KEY_R))
 		{
-			rc2 = hidSendVibrationValue(&VibrationDeviceHandle, &VibrationValue);//This is really only needed when sending a new VibrationValue.
+			//Calling hidSendVibrationValue is really only needed when sending a new VibrationValue.
+
+			//left-joycon
+			rc2 = hidSendVibrationValue(&VibrationDeviceHandles[0], &VibrationValue);
+			if (R_FAILED(rc2)) printf("hidSendVibrationValue() returned: 0x%x\n", rc2);
+
+			//right-joycon
+			rc2 = hidSendVibrationValue(&VibrationDeviceHandles[1], &VibrationValue);
 			if (R_FAILED(rc2)) printf("hidSendVibrationValue() returned: 0x%x\n", rc2);
 
 			if (kDown & KEY_A) VibrationValue.values[0]+= 1.0f;
@@ -55,7 +63,10 @@ int main(int argc, char **argv)
 		}
 		else if(kUp & KEY_R)//Stop vibration.
 		{
-			rc2 = hidSendVibrationValue(&VibrationDeviceHandle, &VibrationValue_stop);
+			rc2 = hidSendVibrationValue(&VibrationDeviceHandles[0], &VibrationValue_stop);
+			if (R_FAILED(rc2)) printf("hidSendVibrationValue() for stop returned: 0x%x\n", rc2);
+
+			rc2 = hidSendVibrationValue(&VibrationDeviceHandles[1], &VibrationValue_stop);
 			if (R_FAILED(rc2)) printf("hidSendVibrationValue() for stop returned: 0x%x\n", rc2);
 		}
 
