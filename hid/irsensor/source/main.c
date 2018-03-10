@@ -12,8 +12,8 @@ int main(int argc, char **argv)
     Result rc=0;
     Result rc2=0;
     u32 irhandle=0;
-    irsImageTransferProcessorConfig config;
-    irsImageTransferProcessorState state;
+    IrsImageTransferProcessorConfig config;
+    IrsImageTransferProcessorState state;
     size_t ir_buffer_size = 0x12c00;
     u8 *ir_buffer = NULL;
 
