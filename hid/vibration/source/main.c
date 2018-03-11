@@ -4,6 +4,8 @@
 #include <switch.h>
 
 //Example for HID vibration/rumble.
+//The joy-con for player-1 must be detached from the system, currently it doesn't vibrate when attached (handheld-mode).
+//TODO: Fix this for handheld-mode^.
 
 int main(int argc, char **argv)
 {
