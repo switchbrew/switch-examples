@@ -4,8 +4,7 @@
 #include <switch.h>
 
 //Example for HID vibration/rumble.
-//The joy-con for player-1 must be detached from the system, currently it doesn't vibrate when attached (handheld-mode).
-//TODO: Fix this for handheld-mode^.
+//TODO: Select CONTROLLER_HANDHELD/CONTROLLER_PLAYER_1 automatically instead of hard-coding to CONTROLLER_HANDHELD.
 
 int main(int argc, char **argv)
 {
@@ -14,6 +13,7 @@ int main(int argc, char **argv)
 
     HidVibrationValue VibrationValue;
     HidVibrationValue VibrationValue_stop;
+    HidVibrationValue VibrationValues[2];
 
     gfxInitDefault();
     consoleInit(NULL);
@@ -21,20 +21,23 @@ int main(int argc, char **argv)
     printf("Press PLUS to exit.\n");
 
     //Two VibrationDeviceHandles are returned: first one for left-joycon, second one for right-joycon.
-    rc = hidInitializeVibrationDevices(VibrationDeviceHandles, 2, CONTROLLER_PLAYER_1, LAYOUT_DEFAULT);
-    printf("hidInitializeVibrationDevice() returned: 0x%x\n", rc);
+    //Change the total_handles param to 1, and update the hidSendVibrationValues calls, if you only want 1 VibrationDeviceHandle.
+    rc = hidInitializeVibrationDevices(VibrationDeviceHandles, 2, CONTROLLER_HANDHELD, TYPE_HANDHELD | TYPE_JOYCON_PAIR);
+    printf("hidInitializeVibrationDevices() returned: 0x%x\n", rc);
 
-    if (R_SUCCEEDED(rc)) printf("Hold R to vibrate, and press A/B/X/Y to adjust values.\n");
+    if (R_SUCCEEDED(rc)) printf("Hold R to vibrate, and press A/B/X/Y while holding R to adjust values.\n");
 
     VibrationValue.amp_low   = 0.2f;
     VibrationValue.freq_low  = 10.0f;
     VibrationValue.amp_high  = 0.2f;
     VibrationValue.freq_high = 10.0f;
 
+    memset(VibrationValues, 0, sizeof(VibrationValues));
+
     memset(&VibrationValue_stop, 0, sizeof(HidVibrationValue));
     // Switch like stop behavior with muted band channels and frequencies set to default.
     VibrationValue_stop.freq_low  = 160.0f;
-        VibrationValue_stop.freq_high = 320.0f;
+    VibrationValue_stop.freq_high = 320.0f;
 
     // Main loop
     while(appletMainLoop())
@@ -51,15 +54,14 @@ int main(int argc, char **argv)
 
         if (R_SUCCEEDED(rc) && (kHeld & KEY_R))
         {
-            //Calling hidSendVibrationValue is really only needed when sending a new VibrationValue.
+            //Calling hidSendVibrationValue/hidSendVibrationValues is really only needed when sending new VibrationValue(s).
+            //If you just want to vibrate 1 device, you can also use hidSendVibrationValue.
 
-            //left-joycon
-            rc2 = hidSendVibrationValue(&VibrationDeviceHandles[0], &VibrationValue);
-            if (R_FAILED(rc2)) printf("hidSendVibrationValue() returned: 0x%x\n", rc2);
+            memcpy(&VibrationValues[0], &VibrationValue, sizeof(HidVibrationValue));
+            memcpy(&VibrationValues[1], &VibrationValue, sizeof(HidVibrationValue));
 
-            //right-joycon
-            rc2 = hidSendVibrationValue(&VibrationDeviceHandles[1], &VibrationValue);
-            if (R_FAILED(rc2)) printf("hidSendVibrationValue() returned: 0x%x\n", rc2);
+            rc2 = hidSendVibrationValues(VibrationDeviceHandles, VibrationValues, 2);
+            if (R_FAILED(rc2)) printf("hidSendVibrationValues() returned: 0x%x\n", rc2);
 
             if (kDown & KEY_A) VibrationValue.amp_low   += 0.1f;
             if (kDown & KEY_B) VibrationValue.freq_low  += 5.0f;
@@ -68,11 +70,11 @@ int main(int argc, char **argv)
         }
         else if(kUp & KEY_R)//Stop vibration.
         {
-            rc2 = hidSendVibrationValue(&VibrationDeviceHandles[0], &VibrationValue_stop);
-            if (R_FAILED(rc2)) printf("hidSendVibrationValue() for stop returned: 0x%x\n", rc2);
+            memcpy(&VibrationValues[0], &VibrationValue_stop, sizeof(HidVibrationValue));
+            memcpy(&VibrationValues[1], &VibrationValue_stop, sizeof(HidVibrationValue));
 
-            rc2 = hidSendVibrationValue(&VibrationDeviceHandles[1], &VibrationValue_stop);
-            if (R_FAILED(rc2)) printf("hidSendVibrationValue() for stop returned: 0x%x\n", rc2);
+            rc2 = hidSendVibrationValues(VibrationDeviceHandles, VibrationValues, 2);
+            if (R_FAILED(rc2)) printf("hidSendVibrationValues() for stop returned: 0x%x\n", rc2);
         }
 
         gfxFlushBuffers();
