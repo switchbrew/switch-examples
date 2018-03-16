@@ -53,6 +53,7 @@ int main(int argc, char **argv)
     if (R_SUCCEEDED(rc))
     {
         rc = irsGetIrCameraHandle(&irhandle, CONTROLLER_PLAYER_1);
+        //If you want to use handheld-mode/non-CONTROLLER_PLAYER_* for irsensor you have to set irhandle directly, for example: irhandle = CONTROLLER_HANDHELD;
         printf("irsGetIrCameraHandle() returned 0x%x\n", rc);
     }
 
