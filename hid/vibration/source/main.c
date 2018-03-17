@@ -4,6 +4,7 @@
 #include <switch.h>
 
 //Example for HID vibration/rumble.
+//For vibration to work you may have to do the following first: enter System-Settings->Controllers, then turn the vibration config to OFF (if it's already ON), then ON.
 
 int main(int argc, char **argv)
 {
