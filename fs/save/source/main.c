@@ -57,6 +57,7 @@ int main(int argc, char **argv)
     //Get the userID for save mounting. To mount common savedata, use FS_SAVEDATA_USERID_COMMONSAVE.
 
     //Try to find savedata to use with get_save() first, otherwise fallback to the above hard-coded TID + the userID from accountGetActiveUser(). Note that you can use either method.
+    //See the account example for getting account info for an userID.
     if (R_FAILED(get_save(&titleID, &userID))) {
         rc = accountInitialize();
         if (R_FAILED(rc)) {
