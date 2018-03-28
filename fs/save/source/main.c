@@ -88,6 +88,7 @@ int main(int argc, char **argv)
         }
     }
 
+    //You can use any device-name. If you want multiple saves mounted at the same time, you must use different device-names for each one.
     if (R_SUCCEEDED(rc)) {
         ret = fsdevMountDevice("save", tmpfs);
         if (ret==-1) {
