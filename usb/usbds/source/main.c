@@ -116,7 +116,7 @@ int main(int argc, char **argv)
 {
     Result ret;
 
-    usbDsDeviceInfo deviceinfo = {
+    UsbDsDeviceInfo deviceinfo = {
         .idVendor = 0x0403, // "Future Technology Devices International, Ltd"
         .idProduct = 0x6001, // "FT232 USB-Serial (UART) IC"
         .bcdDevice = 0x0200,
