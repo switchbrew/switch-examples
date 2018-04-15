@@ -4,7 +4,7 @@
 
 #include <switch.h>
 
-//This example shows how to get nsApplicationControlData for a title, which contains nacp/icon. See libnx ns.h.
+//This example shows how to get NsApplicationControlData for a title, which contains nacp/icon. See libnx ns.h.
 //TODO: libnx ns impl doesn't support >=3.0.0 currently.
 
 int main(int argc, char **argv)
@@ -12,7 +12,7 @@ int main(int argc, char **argv)
     Result rc=0;
 
     u64 titleID=0x01007ef00011e000;//titleID for use with nsGetApplicationControlData, in this case BOTW.
-    nsApplicationControlData *buf=NULL;
+    NsApplicationControlData *buf=NULL;
     size_t outsize=0;
 
     char name[0x201];
@@ -20,13 +20,13 @@ int main(int argc, char **argv)
     gfxInitDefault();
     consoleInit(NULL);
 
-    buf = (nsApplicationControlData*)malloc(sizeof(nsApplicationControlData));
+    buf = (NsApplicationControlData*)malloc(sizeof(NsApplicationControlData));
     if (buf==NULL) {
         rc = MAKERESULT(Module_Libnx, LibnxError_OutOfMemory);
         printf("Failed to alloc mem.\n");
     }
     else {
-        memset(buf, 0, sizeof(nsApplicationControlData));
+        memset(buf, 0, sizeof(NsApplicationControlData));
     }
 
     if (R_SUCCEEDED(rc)) {
@@ -37,7 +37,7 @@ int main(int argc, char **argv)
     }
 
     if (R_SUCCEEDED(rc)) {
-        rc = nsGetApplicationControlData(1, titleID, buf, sizeof(nsApplicationControlData), &outsize);
+        rc = nsGetApplicationControlData(1, titleID, buf, sizeof(NsApplicationControlData), &outsize);
         if (R_FAILED(rc)) {
             printf("nsGetApplicationControlData() failed: 0x%x\n", rc);
         }
