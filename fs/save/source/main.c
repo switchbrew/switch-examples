@@ -58,6 +58,7 @@ int main(int argc, char **argv)
 
     //Try to find savedata to use with get_save() first, otherwise fallback to the above hard-coded TID + the userID from accountGetActiveUser(). Note that you can use either method.
     //See the account example for getting account info for an userID.
+    //See also the app_controldata example for getting info for a titleID.
     if (R_FAILED(get_save(&titleID, &userID))) {
         rc = accountInitialize();
         if (R_FAILED(rc)) {
