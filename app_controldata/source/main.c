@@ -5,7 +5,6 @@
 #include <switch.h>
 
 //This example shows how to get NsApplicationControlData for a title, which contains nacp/icon. See libnx ns.h.
-//TODO: libnx ns impl doesn't support >=3.0.0 currently.
 
 int main(int argc, char **argv)
 {
