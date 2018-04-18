@@ -132,7 +132,7 @@ ifneq ($(APP_TITLEID),)
 endif
 
 ifneq ($(ROMFS),)
-	export NROFLAGS += --romfs=$(CURDIR)/$(ROMFS)
+	export NROFLAGS += --romfsdir=$(CURDIR)/$(ROMFS)
 endif
 
 .PHONY: $(BUILD) clean all
