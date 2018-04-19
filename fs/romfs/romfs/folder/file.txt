@@ -1,0 +1,6 @@
+Hello, this is the libnx romfs example.
+This text is being read off a file in romfs.
+
+  >>Switch Homebrew is Cool<<
+
+Signed off, fincs & WinterMute

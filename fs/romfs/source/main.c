@@ -1,5 +1,6 @@
 #include <string.h>
 #include <stdio.h>
+#include <errno.h>
 
 #include <switch.h>
 
@@ -22,6 +23,8 @@ void printfile(const char* path)
         }
         printf(">>EOF<<\n");
         fclose(f);
+    } else {
+        printf("errno is %d, %s\n", errno, strerror(errno));
     }
 }
 
