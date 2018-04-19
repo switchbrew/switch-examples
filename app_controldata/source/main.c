@@ -14,6 +14,7 @@ int main(int argc, char **argv)
     NsApplicationControlData *buf=NULL;
     size_t outsize=0;
 
+    NacpLanguageEntry *langentry = NULL;
     char name[0x201];
 
     gfxInitDefault();
@@ -47,9 +48,14 @@ int main(int argc, char **argv)
         }
 
         if (R_SUCCEEDED(rc)) {
-            //TODO: Determine which language to use instead of using hard-coded index 0.
+            rc = nacpGetLanguageEntry(&buf->nacp, &langentry);
+
+            if (R_FAILED(rc) || langentry==NULL) printf("Failed to load LanguageEntry.\n");
+        }
+
+        if (R_SUCCEEDED(rc)) {
             memset(name, 0, sizeof(name));
-            strncpy(name, buf->nacp.lang[0].name, sizeof(buf->nacp.lang[0].name));//Don't assume the nacp string is NUL-terminated for safety.
+            strncpy(name, langentry->name, sizeof(langentry->name));//Don't assume the nacp string is NUL-terminated for safety.
 
             printf("Name: %s\n", name);//Note that the print-console doesn't support UTF-8. The name is UTF-8, so this will only display properly if there isn't any non-ASCII characters. To display it properly, a print method which supports UTF-8 should be used instead.
 
