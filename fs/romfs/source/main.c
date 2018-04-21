@@ -34,7 +34,7 @@ int main(int argc, char **argv)
     consoleInit(NULL);
 
     Result rc = romfsInit();
-    if (rc)
+    if (R_FAILED(rc))
         printf("romfsInit: %08X\n", rc);
     else
     {
