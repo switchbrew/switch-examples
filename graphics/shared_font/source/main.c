@@ -7,7 +7,10 @@
 
 //See also libnx pl.h.
 
-//TODO: Actually use the font-data.
+//TODO: Finish this.
+
+//This requires the switch-freetype package.
+//Freetype code here is based on the example code from freetype docs.
 
 int main(int argc, char **argv)
 {
@@ -18,6 +21,10 @@ int main(int argc, char **argv)
     u64 LanguageCode=0;
     PlFontData fonts[PlSharedFontType_Total];
     size_t total_fonts=0;
+    FT_Error ret;
+    FT_Library library;
+    FT_Face face;
+    FT_UInt glyph_index;
 
     gfxInitDefault();
     consoleInit(NULL);
@@ -44,6 +51,38 @@ int main(int argc, char **argv)
                 printf("total_fonts: %lu\n", total_fonts);
 
                 for (i=0; i<total_fonts; i++) printf("[%u] type=%u\n", i, fonts[i].type);
+            }
+
+            ret = FT_Init_FreeType(&library);
+            if (ret) printf("FT_Init_FreeType() failed: %d\n", ret);
+
+            if (ret==0)
+            {
+                ret = FT_New_Memory_Face( library,
+                                          fonts[0].address,    /* first byte in memory */
+                                          fonts[0].size,       /* size in bytes        */
+                                          0,                   /* face_index           */
+                                          &face);
+
+                if (ret) printf("FT_New_Memory_Face() failed: %d\n", ret);
+
+                if (ret==0)
+                {
+                    ret = FT_Set_Char_Size(
+                            face,    /* handle to face object           */
+                            0,       /* char_width in 1/64th of points  */
+                            16*64,   /* char_height in 1/64th of points */
+                            300,     /* horizontal device resolution    */
+                            300);    /* vertical device resolution      */
+
+                    if (ret) printf("FT_Set_Char_Size() failed: %d\n", ret);
+
+                    if (ret==0) glyph_index = FT_Get_Char_Index(face, 'A');//TODO: Load charcode from string.
+
+                    FT_Done_Face(face);
+                }
+
+                FT_Done_FreeType(library);
             }
 
             plExit();
