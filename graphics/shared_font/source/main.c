@@ -16,7 +16,7 @@ int main(int argc, char **argv)
     u32 i;
 
     u64 LanguageCode=0;
-    plFontData fonts[PlSharedFontType_Total];
+    PlFontData fonts[PlSharedFontType_Total];
     size_t total_fonts=0;
 
     gfxInitDefault();
