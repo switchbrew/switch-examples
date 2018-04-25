@@ -84,16 +84,17 @@ int main(int argc, char **argv)
     u32* framebuf;
 
     u64 LanguageCode=0;
+    PlFontData font;
     PlFontData fonts[PlSharedFontType_Total];
     size_t total_fonts=0;
-    FT_Error ret=0, libret=0, faceret=0;
+    FT_Error ret=0, libret=1, faceret=1;
     FT_Library library;
     FT_Face face;
 
     gfxInitDefault();
     consoleInit(NULL);
 
-    rc = setInitialize();
+    rc = setInitialize();//Only needed with shared-font when using plGetSharedFont.
     if (R_SUCCEEDED(rc)) rc = setGetSystemLanguage(&LanguageCode);
     setExit();
 
@@ -106,37 +107,42 @@ int main(int argc, char **argv)
 
         if (R_SUCCEEDED(rc))
         {
+            //Use this when using multiple shared-fonts.
             rc = plGetSharedFont(LanguageCode, fonts, PlSharedFontType_Total, &total_fonts);
-
             if (R_FAILED(rc)) printf("plGetSharedFont() failed: 0x%x\n", rc);
 
-            ret = FT_Init_FreeType(&library);
-            libret = ret;
-            if (ret) printf("FT_Init_FreeType() failed: %d\n", ret);
+            //Use this when you want to use specific shared-font(s). Since this example only uses 1 font, only the font loaded by this will be used.
+            rc = plGetSharedFontByType(&font, PlSharedFontType_Standard);
+            if (R_FAILED(rc)) printf("plGetSharedFontByType() failed: 0x%x\n", rc);
 
-            if (ret==0)
+            if (R_SUCCEEDED(rc))
             {
-                //Use the second font. You may want to use all fonts, if you want to support non-{Japan, US and Europe} fonts.
-                //TODO: Probably should use PlSharedFontType_Standard explicitly, instead of assuming it's fonts[1].
-                ret = FT_New_Memory_Face( library,
-                                          fonts[1].address,    /* first byte in memory */
-                                          fonts[1].size,       /* size in bytes        */
-                                          0,                   /* face_index           */
-                                          &face);
-
-                faceret = ret;
-                if (ret) printf("FT_New_Memory_Face() failed: %d\n", ret);
+                ret = FT_Init_FreeType(&library);
+                libret = ret;
+                if (ret) printf("FT_Init_FreeType() failed: %d\n", ret);
 
                 if (ret==0)
                 {
-                    ret = FT_Set_Char_Size(
-                            face,    /* handle to face object           */
-                            0,       /* char_width in 1/64th of points  */
-                            8*64,   /* char_height in 1/64th of points */
-                            300,     /* horizontal device resolution    */
-                            300);    /* vertical device resolution      */
+                    ret = FT_New_Memory_Face( library,
+                                              font.address,    /* first byte in memory */
+                                              font.size,       /* size in bytes        */
+                                              0,               /* face_index           */
+                                              &face);
 
-                    if (ret) printf("FT_Set_Char_Size() failed: %d\n", ret);
+                    faceret = ret;
+                    if (ret) printf("FT_New_Memory_Face() failed: %d\n", ret);
+
+                    if (ret==0)
+                    {
+                        ret = FT_Set_Char_Size(
+                                face,    /* handle to face object           */
+                                0,       /* char_width in 1/64th of points  */
+                                8*64,    /* char_height in 1/64th of points */
+                                300,     /* horizontal device resolution    */
+                                300);    /* vertical device resolution      */
+
+                        if (ret) printf("FT_Set_Char_Size() failed: %d\n", ret);
+                    }
                 }
             }
         }
