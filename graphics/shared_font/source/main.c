@@ -102,7 +102,7 @@ int main(int argc, char **argv)
     if (R_SUCCEEDED(rc))
     {
         rc = plInitialize();
-        if (R_FAILED(rc)) printf("plInitialize() faild: 0x%x\n", rc);
+        if (R_FAILED(rc)) printf("plInitialize() failed: 0x%x\n", rc);
 
         if (R_SUCCEEDED(rc))
         {
