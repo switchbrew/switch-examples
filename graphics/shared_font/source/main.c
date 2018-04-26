@@ -36,10 +36,11 @@ void draw_glyph(FT_Bitmap* bitmap, u32* framebuf, u32 x, u32 y)
     }
 }
 
-//Note that this doesn't handle newline, etc.
+//Note that this doesn't handle {tmpx > width}, etc.
 //str is UTF-8.
 void draw_text(FT_Face face, u32* framebuf, u32 x, u32 y, const uint8_t* str)
 {
+    u32 tmpx = x;
     FT_Error ret=0;
     FT_UInt glyph_index;
     FT_GlyphSlot slot = face->glyph;
@@ -54,6 +55,13 @@ void draw_text(FT_Face face, u32* framebuf, u32 x, u32 y, const uint8_t* str)
         unitcount = decode_utf8 (&tmpchar, &str[i]);
         if (unitcount <= 0) break;
         i+= unitcount;
+
+        if (tmpchar == '\n')
+        {
+            tmpx = x;
+            y+= face->size->metrics.height / 64;
+            continue;
+        }
 
         glyph_index = FT_Get_Char_Index(face, tmpchar);
         //If using multiple fonts, you could check for glyph_index==0 here and attempt using the FT_Face for the other fonts with FT_Get_Char_Index.
@@ -71,9 +79,9 @@ void draw_text(FT_Face face, u32* framebuf, u32 x, u32 y, const uint8_t* str)
 
         if (ret) return;
 
-        draw_glyph(&slot->bitmap, framebuf, x + slot->bitmap_left, y - slot->bitmap_top);
+        draw_glyph(&slot->bitmap, framebuf, tmpx + slot->bitmap_left, y - slot->bitmap_top);
 
-        x += slot->advance.x >> 6;
+        tmpx += slot->advance.x >> 6;
         y += slot->advance.y >> 6;
     }
 }
@@ -167,7 +175,9 @@ int main(int argc, char **argv)
 
         framebuf = (u32*) gfxGetFramebuffer(&framebuf_width, NULL);
 
-        if (R_SUCCEEDED(rc) && ret==0) draw_text(face, framebuf, 64, 64, (const uint8_t*)"The quick brown fox jumps over the lazy dog. ファイル");
+        memset(framebuf, 0, gfxGetFramebufferSize());
+
+        if (R_SUCCEEDED(rc) && ret==0) draw_text(face, framebuf, 64, 64, (const uint8_t*)"The quick brown fox jumps over the lazy dog. ファイル\ntest Test");
 
         gfxFlushBuffers();
         gfxSwapBuffers();
