@@ -101,7 +101,8 @@ Result usbds_test(u8 *tmpbuf)
 
     //Start a device->host transfer.
     ret = usbDsEndpoint_PostBufferAsync(endpoint_in, tmpbuf, 0x2+1, NULL);
-    if(R_FAILED(ret))return ret;
+    if(R_FAILED(ret))
+        return ret;
 
     //Wait for the transfer to finish.
     svcWaitSynchronization(&tmpindex, &endpoint_in->CompletionEvent, 1, U64_MAX);
@@ -136,7 +137,8 @@ int main(int argc, char **argv)
         usbDsExit();
     }
 
-        if(R_FAILED(ret))fatalSimple(ret);
+    if(R_FAILED(ret))
+        fatalSimple(ret);
 
     svcSleepThread(5000000000);//Delay 5s
 
