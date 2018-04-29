@@ -50,9 +50,9 @@ int main(int argc, char **argv)
         hidScanInput();
 
         //hidKeysDown returns information about which buttons have been just pressed (and they weren't in the previous frame)
-        u32 kDown = hidKeysDown(CONTROLLER_P1_AUTO);
-        u32 kHeld = hidKeysHeld(CONTROLLER_P1_AUTO);
-        u32 kUp = hidKeysUp(CONTROLLER_P1_AUTO);
+        u64 kDown = hidKeysDown(CONTROLLER_P1_AUTO);
+        u64 kHeld = hidKeysHeld(CONTROLLER_P1_AUTO);
+        u64 kUp = hidKeysUp(CONTROLLER_P1_AUTO);
 
         if (kDown & KEY_PLUS) break; // break in order to return to hbmenu
 
