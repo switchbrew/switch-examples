@@ -22,7 +22,7 @@ int main(int argc, char **argv)
     gfxInitDefault();
     consoleInit(NULL);
 
-    u32 kDownOld = 0, kHeldOld = 0, kUpOld = 0; //In these variables there will be information about keys detected in the previous frame
+    u64 kDownOld = 0, kHeldOld = 0, kUpOld = 0; //In these variables there will be information about keys detected in the previous frame
 
     printf("\x1b[1;1HPress PLUS to exit.");
     printf("\x1b[2;1HLeft joystick position:");
@@ -35,11 +35,11 @@ int main(int argc, char **argv)
         hidScanInput();
 
         //hidKeysDown returns information about which buttons have been just pressed (and they weren't in the previous frame)
-        u32 kDown = hidKeysDown(CONTROLLER_P1_AUTO);
+        u64 kDown = hidKeysDown(CONTROLLER_P1_AUTO);
         //hidKeysHeld returns information about which buttons have are held down in this frame
-        u32 kHeld = hidKeysHeld(CONTROLLER_P1_AUTO);
+        u64 kHeld = hidKeysHeld(CONTROLLER_P1_AUTO);
         //hidKeysUp returns information about which buttons have been just released
-        u32 kUp = hidKeysUp(CONTROLLER_P1_AUTO);
+        u64 kUp = hidKeysUp(CONTROLLER_P1_AUTO);
 
         if (kDown & KEY_PLUS) break; // break in order to return to hbmenu
 
