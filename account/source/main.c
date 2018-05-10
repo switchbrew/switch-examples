@@ -58,7 +58,7 @@ int main(int argc, char **argv)
 
             if (R_SUCCEEDED(rc)) {
                 memset(username,  0, sizeof(username));
-                strncpy(username, profilebase.username, sizeof(profilebase.username));//Even though profilebase.username usually has a NUL-terminator, don't assume it does for safety.
+                strncpy(username, profilebase.username, sizeof(username)-1);//Even though profilebase.username usually has a NUL-terminator, don't assume it does for safety.
 
                 printf("Username: %s\n", username);//Note that the print-console doesn't support UTF-8. The username is UTF-8, so this will only display properly if there isn't any non-ASCII characters. To display it properly, a print method which supports UTF-8 should be used instead.
 

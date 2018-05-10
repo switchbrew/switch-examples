@@ -55,7 +55,7 @@ int main(int argc, char **argv)
 
         if (R_SUCCEEDED(rc)) {
             memset(name, 0, sizeof(name));
-            strncpy(name, langentry->name, sizeof(langentry->name));//Don't assume the nacp string is NUL-terminated for safety.
+            strncpy(name, langentry->name, sizeof(name)-1);//Don't assume the nacp string is NUL-terminated for safety.
 
             printf("Name: %s\n", name);//Note that the print-console doesn't support UTF-8. The name is UTF-8, so this will only display properly if there isn't any non-ASCII characters. To display it properly, a print method which supports UTF-8 should be used instead.
 
