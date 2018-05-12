@@ -101,6 +101,7 @@ int main(int argc, char **argv)
 
     //At this point you can use the mounted device with standard stdio.
     //After modifying savedata, in order for the changes to take affect you must use: rc = fsdevCommitDevice("save");
+    //See also libnx fs_dev.h for fsdevCommitDevice.
 
     if (R_SUCCEEDED(rc)) {
         dir = opendir("save:/");//Open the "save:/" directory.
