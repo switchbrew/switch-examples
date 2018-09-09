@@ -83,7 +83,6 @@ int main(int argc, char **argv)
 
         gfxFlushBuffers();
         gfxSwapBuffers();
-        gfxWaitForVsync();
     }
 
     gfxExit();

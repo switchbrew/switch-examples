@@ -181,7 +181,6 @@ int main(int argc, char **argv)
 
         gfxFlushBuffers();
         gfxSwapBuffers();
-        gfxWaitForVsync();
     }
 
     if (faceret==0) FT_Done_Face(face);

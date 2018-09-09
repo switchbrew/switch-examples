@@ -187,7 +187,6 @@ int main(int argc, char **argv)
         
         gfxFlushBuffers();
         gfxSwapBuffers();
-        gfxWaitForVsync();
     }
     
     // Stop audio playback.
