@@ -4,6 +4,7 @@
 #include <switch.h>
 
 #include <EGL/egl.h>    // EGL library
+#include <EGL/eglext.h> // EGL extensions
 #include <glad/glad.h>  // glad library (OpenGL loader)
 
 //-----------------------------------------------------------------------------
@@ -83,14 +84,14 @@ static bool initEgl()
     // Get an appropriate EGL framebuffer configuration
     EGLConfig config;
     EGLint numConfigs;
-    static const EGLint attributeList[] =
+    static const EGLint framebufferAttributeList[] =
     {
         EGL_RED_SIZE, 1,
         EGL_GREEN_SIZE, 1,
         EGL_BLUE_SIZE, 1,
         EGL_NONE
     };
-    eglChooseConfig(s_display, attributeList, &config, 1, &numConfigs);
+    eglChooseConfig(s_display, framebufferAttributeList, &config, 1, &numConfigs);
     if (numConfigs == 0)
     {
         TRACE("No config found! error: %d", eglGetError());
@@ -106,7 +107,14 @@ static bool initEgl()
     }
 
     // Create an EGL rendering context
-    s_context = eglCreateContext(s_display, config, EGL_NO_CONTEXT, nullptr);
+    static const EGLint contextAttributeList[] =
+    {
+        EGL_CONTEXT_OPENGL_PROFILE_MASK_KHR, EGL_CONTEXT_OPENGL_CORE_PROFILE_BIT_KHR,
+        EGL_CONTEXT_MAJOR_VERSION_KHR, 4,
+        EGL_CONTEXT_MINOR_VERSION_KHR, 3,
+        EGL_NONE
+    };
+    s_context = eglCreateContext(s_display, config, EGL_NO_CONTEXT, contextAttributeList);
     if (!s_context)
     {
         TRACE("Context creation failed! error: %d", eglGetError());
