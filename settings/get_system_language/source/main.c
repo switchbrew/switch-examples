@@ -10,7 +10,6 @@ int main(int argc, char **argv)
     u64 LanguageCode=0;
     s32 Language=0;
 
-    gfxInitDefault();
     consoleInit(NULL);
 
     Result rc = setInitialize();
@@ -58,12 +57,10 @@ int main(int argc, char **argv)
 
         if (kDown & KEY_PLUS) break; // break in order to return to hbmenu
 
-        gfxFlushBuffers();
-        gfxSwapBuffers();
+        consoleUpdate(NULL);
     }
 
     setExit();
-    gfxExit();
+    consoleExit(NULL);
     return 0;
 }
-

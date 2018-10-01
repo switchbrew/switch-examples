@@ -30,7 +30,6 @@ void printfile(const char* path)
 
 int main(int argc, char **argv)
 {
-    gfxInitDefault();
     consoleInit(NULL);
 
     Result rc = romfsInit();
@@ -55,12 +54,10 @@ int main(int argc, char **argv)
 
         if (kDown & KEY_PLUS) break; // break in order to return to hbmenu
 
-        gfxFlushBuffers();
-        gfxSwapBuffers();
+        consoleUpdate(NULL);
     }
 
     romfsExit();
-    gfxExit();
+    consoleExit(NULL);
     return 0;
 }
-

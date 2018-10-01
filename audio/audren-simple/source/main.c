@@ -11,7 +11,6 @@
 
 int main(void)
 {
-    gfxInitDefault();
     consoleInit(NULL);
 
     printf("Simple audren demonstration program\n");
@@ -78,7 +77,6 @@ int main(void)
     // Main loop
     while (appletMainLoop())
     {
-        gfxSwapBuffers();
         hidScanInput();
 
         u64 kDown = hidKeysDown(CONTROLLER_P1_AUTO);
@@ -102,7 +100,7 @@ int main(void)
                 printf("sample count = %" PRIu32 "\n", audrvVoiceGetPlayedSampleCount(&drv, 0));
         }
 
-        gfxFlushBuffers();
+        consoleUpdate(NULL);
     }
 
     if (initedDriver)
@@ -110,6 +108,6 @@ int main(void)
     if (initedAudren)
         audrenExit();
 
-    gfxExit();
+    consoleExit(NULL);
     return 0;
 }

@@ -16,7 +16,6 @@ int main(int argc, char **argv)
     HidVibrationValue VibrationValue_stop;
     HidVibrationValue VibrationValues[2];
 
-    gfxInitDefault();
     consoleInit(NULL);
 
     printf("Press PLUS to exit.\n");
@@ -90,11 +89,9 @@ int main(int argc, char **argv)
             if (R_FAILED(rc2)) printf("hidSendVibrationValues() for stop other device returned: 0x%x\n", rc2);
         }
 
-        gfxFlushBuffers();
-        gfxSwapBuffers();
+        consoleUpdate(NULL);
     }
 
-    gfxExit();
+    consoleExit(NULL);
     return 0;
 }
-

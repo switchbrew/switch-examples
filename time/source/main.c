@@ -10,7 +10,6 @@ const char* const weekDays[7] = {"Sunday", "Monday", "Tuesday", "Wednesday", "Th
 
 int main(int argc, char **argv)
 {
-    gfxInitDefault();
     consoleInit(NULL);
 
     printf("\x1b[16;16HPress PLUS to exit.");
@@ -41,11 +40,9 @@ int main(int argc, char **argv)
         printf("\x1b[1;1H%02i:%02i:%02i", hours, minutes, seconds);
         printf("\n%s %s %i %i", weekDays[wday], months[month], day, year);
 
-        gfxFlushBuffers();
-        gfxSwapBuffers();
+        consoleUpdate(NULL);
     }
 
-    gfxExit();
+    consoleExit(NULL);
     return 0;
 }
-

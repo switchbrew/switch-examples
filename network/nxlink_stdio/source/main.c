@@ -16,9 +16,8 @@
 
 #include <switch.h>
 
-int main(int argc, char **argv) {
-
-    gfxInitDefault();
+int main(int argc, char **argv)
+{
     consoleInit(NULL);
 
     // Initialise sockets
@@ -62,11 +61,10 @@ int main(int argc, char **argv) {
             printf("B Pressed\n");
         }
 
-        gfxFlushBuffers();
-        gfxSwapBuffers();
+        consoleUpdate(NULL);
     }
 
     socketExit();
-    gfxExit();
+    consoleExit(NULL);
     return 0;
 }

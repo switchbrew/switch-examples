@@ -18,23 +18,21 @@
 int main(int argc, char **argv)
 {
     Result rc = 0;
-    
-    gfxInitDefault();
 
     // Initialize console. Using NULL as the second argument tells the console library to use the internal console structure as current one.
     consoleInit(NULL);
-    
+
     AudioInBuffer audin_buf;
     AudioOutBuffer audout_buf;
     AudioInBuffer *released_in_buffer;
     AudioOutBuffer *released_out_buffer;
     u32 released_in_count;
     u32 released_out_count;
-    
+
     // Make sure the sample buffer size is aligned to 0x1000 bytes.
     u32 data_size = (SAMPLECOUNT * CHANNELCOUNT * BYTESPERSAMPLE);
     u32 buffer_size = (data_size + 0xfff) & ~0xfff;
-    
+
     // Allocate the buffers.
     u8* in_buf_data = memalign(0x1000, buffer_size);
     u8* out_buf_data = memalign(0x1000, buffer_size);
@@ -45,65 +43,65 @@ int main(int argc, char **argv)
         rc = MAKERESULT(Module_Libnx, LibnxError_OutOfMemory);
         printf("Failed to allocate sample data buffers\n");
     }
-    
+
     if (R_SUCCEEDED(rc))
     {
         memset(in_buf_data, 0, buffer_size);
         memset(out_buf_data, 0, buffer_size);
     }
-    
+
     if (R_SUCCEEDED(rc))
     {
         // Initialize the default audio input device.
         rc = audinInitialize();
         printf("audinInitialize() returned 0x%x\n", rc);
     }
-    
+
     if (R_SUCCEEDED(rc))
     {
         // Initialize the default audio output device.
         rc = audoutInitialize();
         printf("audoutInitialize() returned 0x%x\n", rc);
     }
-    
+
     if (R_SUCCEEDED(rc))
     {
         // Start audio capture.
         rc = audinStartAudioIn();
         printf("audinStartAudioIn() returned 0x%x\n", rc);
     }
-    
+
     if (R_SUCCEEDED(rc))
     {
         // Start audio playback.
         rc = audoutStartAudioOut();
         printf("audoutStartAudioOut() returned 0x%x\n", rc);
     }
-    
+
     // Prepare the input buffer.
     audin_buf.next = NULL;
     audin_buf.buffer = in_buf_data;
     audin_buf.buffer_size = buffer_size;
     audin_buf.data_size = data_size;
     audin_buf.data_offset = 0;
-    
+
     // Prepare the output buffer.
     audout_buf.next = NULL;
     audout_buf.buffer = out_buf_data;
     audout_buf.buffer_size = buffer_size;
     audout_buf.data_size = data_size;
     audout_buf.data_offset = 0;
-    
+
     // Prepare pointers and counters for released buffers.
     released_in_buffer = NULL;
     released_out_buffer = NULL;
     released_in_count = 0;
     released_out_count = 0;
-    
+
     // Append the initial input buffer.
     rc = audinAppendAudioInBuffer(&audin_buf);
     printf("audinAppendAudioInBuffer() returned 0x%x\n", rc);
-    
+
     // Append the initial output buffer.
     rc = audoutAppendAudioOutBuffer(&audout_buf);
     printf("audoutAppendAudioOutBuffer() returned 0x%x\n", rc);
@@ -117,21 +115,20 @@ int main(int argc, char **argv)
         u64 kDown = hidKeysDown(CONTROLLER_P1_AUTO);
 
         if (kDown & KEY_PLUS) break; // break in order to return to hbmenu
-        
+
         // Wait for audio capture and playback to finish.
         audinWaitCaptureFinish(&released_in_buffer, &released_in_count, U64_MAX);
         audoutWaitPlayFinish(&released_out_buffer, &released_out_count, U64_MAX);
-        
+
         // Copy the captured audio data into the playback buffer.
         if ((released_in_buffer != NULL) && (released_out_buffer != NULL))
             memcpy(released_out_buffer->buffer, released_in_buffer->buffer, released_in_buffer->data_size);
-        
+
         // Append the released buffers again.
         audinAppendAudioInBuffer(released_in_buffer);
         audoutAppendAudioOutBuffer(released_out_buffer);
-        
-        gfxFlushBuffers();
-        gfxSwapBuffers();
+
+        consoleUpdate(NULL);
     }
     
     // Stop audio capture.
@@ -146,6 +143,6 @@ int main(int argc, char **argv)
     audinExit();
     audoutExit();
     
-    gfxExit();
+    consoleExit(NULL);
     return 0;
 }

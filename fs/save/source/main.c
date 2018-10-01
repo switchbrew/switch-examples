@@ -51,7 +51,6 @@ int main(int argc, char **argv)
     bool account_selected=0;
     u64 titleID=0x01007ef00011e000;//titleID of the save to mount, in this case BOTW.
 
-    gfxInitDefault();
     consoleInit(NULL);
 
     //Get the userID for save mounting. To mount common savedata, use FS_SAVEDATA_USERID_COMMONSAVE.
@@ -136,11 +135,9 @@ int main(int argc, char **argv)
 
         if (kDown & KEY_PLUS) break; // break in order to return to hbmenu
 
-        gfxFlushBuffers();
-        gfxSwapBuffers();
+        consoleUpdate(NULL);
     }
 
-    gfxExit();
+    consoleExit(NULL);
     return 0;
 }
-

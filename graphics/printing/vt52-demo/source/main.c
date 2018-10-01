@@ -5,9 +5,7 @@
 
 int main(int argc, char **argv)
 {
-    gfxInitDefault();
     consoleInit(NULL);
-
 
     // clear screen and home cursor
     printf( CONSOLE_ESC(2J) );
@@ -73,11 +71,9 @@ int main(int argc, char **argv)
 
         if (kDown & KEY_PLUS) break; // break in order to return to hbmenu
 
-        gfxFlushBuffers();
-        gfxSwapBuffers();
+        consoleUpdate(NULL);
     }
 
-    gfxExit();
+    consoleExit(NULL);
     return 0;
 }
-

@@ -19,7 +19,6 @@ int main(int argc, char **argv)
         "", "", "", ""
     };
 
-    gfxInitDefault();
     consoleInit(NULL);
 
     u32 kDownOld = 0, kHeldOld = 0, kUpOld = 0; //In these variables there will be information about keys detected in the previous frame
@@ -81,11 +80,9 @@ int main(int argc, char **argv)
         printf("\x1b[3;1H%04d; %04d", pos_left.dx, pos_left.dy);
         printf("\x1b[5;1H%04d; %04d", pos_right.dx, pos_right.dy);
 
-        gfxFlushBuffers();
-        gfxSwapBuffers();
+        consoleUpdate(NULL);
     }
 
-    gfxExit();
+    consoleExit(NULL);
     return 0;
 }
-

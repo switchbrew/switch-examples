@@ -9,7 +9,6 @@ int main(int argc, char **argv)
 {
     u32 prev_touchcount=0;
 
-    gfxInitDefault();
     consoleInit(NULL);
 
     printf("\x1b[1;1HPress PLUS to exit.");
@@ -52,11 +51,9 @@ int main(int argc, char **argv)
             printf("[point_id=%d] px=%03d, py=%03d, dx=%03d, dy=%03d, angle=%03d\n", i, touch.px, touch.py, touch.dx, touch.dy, touch.angle);
         }
 
-        gfxFlushBuffers();
-        gfxSwapBuffers();
+        consoleUpdate(NULL);
     }
 
-    gfxExit();
+    consoleExit(NULL);
     return 0;
 }
-

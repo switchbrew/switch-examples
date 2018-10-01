@@ -17,7 +17,6 @@ int main(int argc, char **argv)
 
     char username[0x21];
 
-    gfxInitDefault();
     consoleInit(NULL);
 
     memset(&userdata, 0, sizeof(userdata));
@@ -82,11 +81,9 @@ int main(int argc, char **argv)
 
         if (kDown & KEY_PLUS) break; // break in order to return to hbmenu
 
-        gfxFlushBuffers();
-        gfxSwapBuffers();
+        consoleUpdate(NULL);
     }
 
-    gfxExit();
+    consoleExit(NULL);
     return 0;
 }
-

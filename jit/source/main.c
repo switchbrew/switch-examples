@@ -13,7 +13,6 @@ int main(int argc, char **argv)
     u64 (*funcptr)(void);
     u32 testcode[2] = {0xd2800000 | (0x7<<5), 0xd65f03c0};//"mov x0, #0x7" "ret"
 
-    gfxInitDefault();
     consoleInit(NULL);
 
     rc = jitCreate(&j, 0x100000);//Adjust size as needed.
@@ -58,11 +57,9 @@ int main(int argc, char **argv)
 
         if (kDown & KEY_PLUS) break; // break in order to return to hbmenu
 
-        gfxFlushBuffers();
-        gfxSwapBuffers();
+        consoleUpdate(NULL);
     }
 
-    gfxExit();
+    consoleExit(NULL);
     return 0;
 }
-

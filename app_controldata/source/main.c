@@ -17,7 +17,6 @@ int main(int argc, char **argv)
     NacpLanguageEntry *langentry = NULL;
     char name[0x201];
 
-    gfxInitDefault();
     consoleInit(NULL);
 
     buf = (NsApplicationControlData*)malloc(sizeof(NsApplicationControlData));
@@ -78,11 +77,9 @@ int main(int argc, char **argv)
 
         if (kDown & KEY_PLUS) break; // break in order to return to hbmenu
 
-        gfxFlushBuffers();
-        gfxSwapBuffers();
+        consoleUpdate(NULL);
     }
 
-    gfxExit();
+    consoleExit(NULL);
     return 0;
 }
-
