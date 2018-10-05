@@ -28,7 +28,7 @@ int main(int argc, char **argv)
 
         //Print current time
         time_t unixTime = time(NULL);
-        struct tm* timeStruct = gmtime((const time_t *)&unixTime);//Gets UTC time. Currently localtime() will also return UTC (timezones not supported).
+        struct tm* timeStruct = gmtime((const time_t *)&unixTime);//Gets UTC time. If you want local-time use localtime().
 
         int hours = timeStruct->tm_hour;
         int minutes = timeStruct->tm_min;
