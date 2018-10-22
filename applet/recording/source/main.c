@@ -4,8 +4,6 @@
 
 //See also libnx applet.h. See applet.h for the requirements for using this.
 
-extern u32 g_appletRecordingInitialized;
-
 int main(int argc, char **argv)
 {
     u32* framebuf;
