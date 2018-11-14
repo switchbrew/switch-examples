@@ -1,7 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#include <switch.h>
 #include <SDL.h>
 
 static SDL_DisplayMode modes[5];
