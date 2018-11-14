@@ -2,7 +2,7 @@
 #include <stdio.h>
 
 #include <switch.h>
-#include "SDL2/SDL.h"
+#include <SDL.h>
 
 static SDL_DisplayMode modes[5];
 
@@ -112,11 +112,8 @@ int main(int argc, char *argv[])
     }
 
     while (!done) {
-
         while (SDL_PollEvent(&event)) {
-
             switch (event.type) {
-
                 case SDL_JOYAXISMOTION:
                     SDL_Log("Joystick %d axis %d value: %d\n",
                             event.jaxis.which,
