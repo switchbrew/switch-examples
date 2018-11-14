@@ -93,9 +93,7 @@ int main(int argc, char *argv[])
     // list available display modes, for "educational purpose"
     mode_count = SDL_GetNumDisplayModes(0);
     for (int i = 0; i < mode_count; i++) {
-        SDL_DisplayMode mode;
-        SDL_GetDisplayMode(0, i, &mode);
-        modes[i] = mode;
+        SDL_GetDisplayMode(0, i, &modes[i]);
     }
 
     // open CONTROLLER_PLAYER_1 and CONTROLLER_PLAYER_2
