@@ -389,9 +389,11 @@ bool GpuConsole::initEgl()
 	EGLint numConfigs;
 	static const EGLint framebufferAttributeList[] =
 	{
-		EGL_RED_SIZE, 1,
-		EGL_GREEN_SIZE, 1,
-		EGL_BLUE_SIZE, 1,
+		EGL_RENDERABLE_TYPE, EGL_OPENGL_BIT,
+		EGL_RED_SIZE,     8,
+		EGL_GREEN_SIZE,   8,
+		EGL_BLUE_SIZE,    8,
+		EGL_ALPHA_SIZE,   8,
 		EGL_NONE
 	};
 	eglChooseConfig(s_display, framebufferAttributeList, &config, 1, &numConfigs);
