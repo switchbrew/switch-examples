@@ -61,7 +61,7 @@ static EGLDisplay s_display;
 static EGLContext s_context;
 static EGLSurface s_surface;
 
-static bool initEgl()
+static bool initEgl(NWindow* win)
 {
     // Connect to the EGL default display
     s_display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
@@ -103,7 +103,7 @@ static bool initEgl()
     }
 
     // Create an EGL window surface
-    s_surface = eglCreateWindowSurface(s_display, config, (char*)"", nullptr);
+    s_surface = eglCreateWindowSurface(s_display, config, win, nullptr);
     if (!s_surface)
     {
         TRACE("Surface creation failed! error: %d", eglGetError());
@@ -315,8 +315,8 @@ int main(int argc, char* argv[])
     // Set mesa configuration (useful for debugging)
     setMesaConfig();
 
-    // Initialize EGL
-    if (!initEgl())
+    // Initialize EGL on the default window
+    if (!initEgl(nwindowGetDefault()))
         return EXIT_FAILURE;
 
     // Load OpenGL routines using glad

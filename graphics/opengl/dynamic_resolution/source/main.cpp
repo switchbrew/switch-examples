@@ -77,7 +77,7 @@ static EGLDisplay s_display;
 static EGLContext s_context;
 static EGLSurface s_surface;
 
-static bool initEgl()
+static bool initEgl(NWindow* win)
 {
     // Connect to the EGL default display
     s_display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
@@ -119,7 +119,7 @@ static bool initEgl()
     }
 
     // Create an EGL window surface
-    s_surface = eglCreateWindowSurface(s_display, config, (char*)"", nullptr);
+    s_surface = eglCreateWindowSurface(s_display, config, win, nullptr);
     if (!s_surface)
     {
         TRACE("Surface creation failed! error: %d", eglGetError());
@@ -450,7 +450,7 @@ static void sceneUpdate(u32 kHeld)
     glUniformMatrix4fv(loc_mdlvMtx, 1, GL_FALSE, glm::value_ptr(mdlvMtx));
 }
 
-static void configureResolution(bool halved)
+static void configureResolution(NWindow* win, bool halved)
 {
     int width, height;
 
@@ -484,7 +484,7 @@ static void configureResolution(bool halved)
     // remain unused when rendering at a smaller resolution than the framebuffer).
     // Note that glViewport expects the coordinates of the bottom-left corner of
     // the viewport, so we have to calculate that too.
-    gfxConfigureResolution(width, height);
+    nwindowSetCrop(win, 0, 0, width, height);
     glViewport(0, 1080-height, width, height);
 }
 
@@ -511,11 +511,12 @@ int main(int argc, char* argv[])
     // Set mesa configuration (useful for debugging)
     setMesaConfig();
 
-    // Configure the framebuffer dimensions (1080p)
-    gfxInitResolution(1920, 1080);
+    // Retrieve the default window and configure its dimensions (1080p)
+    NWindow* win = nwindowGetDefault();
+    nwindowSetDimensions(win, 1920, 1080);
 
-    // Initialize EGL
-    if (!initEgl())
+    // Initialize EGL on the default window
+    if (!initEgl(win))
         return EXIT_FAILURE;
 
     // Load OpenGL routines using glad
@@ -540,7 +541,7 @@ int main(int argc, char* argv[])
         // will be different in handheld mode/docked mode.
         // As an additional demonstration, when holding A we render the scene
         // at half the original resolution.
-        configureResolution(shouldHalveResolution);
+        configureResolution(win, shouldHalveResolution);
 
         // Update our scene
         sceneUpdate(kHeld);

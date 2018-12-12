@@ -404,7 +404,7 @@ bool GpuConsole::initEgl()
 	}
 
 	// Create an EGL window surface
-	s_surface = eglCreateWindowSurface(s_display, config, (char*)"", nullptr);
+	s_surface = eglCreateWindowSurface(s_display, config, nwindowGetDefault(), nullptr);
 	if (!s_surface)
 	{
 		TRACE("Surface creation failed! error: %d", eglGetError());
