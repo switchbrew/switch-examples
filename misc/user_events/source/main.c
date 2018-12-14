@@ -1,13 +1,20 @@
 #include <stdio.h>
+#include <stdarg.h>
 #include <switch.h>
 
-static UsermodeEvent g_Event;
-static UsermodeEvent g_ExitEvent;
+static UEvent g_Event;
+static UEvent g_ExitEvent;
 static Mutex g_PrintMutex;
 
-void locked_print(const char* str) {
+__attribute__((format(printf, 1, 2)))
+static void locked_printf(const char* fmt, ...)
+{
     mutexLock(&g_PrintMutex);
-    printf(str);
+    va_list va;
+    va_start(va, fmt);
+    vprintf(fmt, va);
+    va_end(va);
+    consoleUpdate(NULL);
     mutexUnlock(&g_PrintMutex);
 }
 
@@ -16,54 +23,46 @@ void threadFunc1(void* arg)
     Result rc;
     int idx;
 
-    locked_print("Entering thread\n");
+    locked_printf("Entering thread\n");
 
     while (1)
     {
-        rc = waitMulti(&idx, -1, waiterForUevent(&g_Event), waiterForUevent(&g_ExitEvent));
-
-        mutexLock(&g_PrintMutex);
-        printf("waitMulti returned %x, index triggered = %d\n", rc, idx);
-        mutexUnlock(&g_PrintMutex);
+        rc = waitMulti(&idx, -1, waiterForUEvent(&g_Event), waiterForUEvent(&g_ExitEvent));
+        locked_printf("waitMulti returned %x, index triggered = %d\n", rc, idx);
 
         if (R_SUCCEEDED(rc))
         {
             if (idx == 0)
             {
-                locked_print("g_Event triggered!\n");
+                locked_printf("g_Event triggered!\n");
                 ueventClear(&g_Event);
             }
             else {
-                locked_print("g_ExitEvent triggered!\n");
+                locked_printf("g_ExitEvent triggered!\n");
                 break;
             }
         }
     }
 
-    rc = waitMulti(&idx, 0, waiterForUevent(&g_Event), waiterForUevent(&g_ExitEvent));
+    rc = waitMulti(&idx, 0, waiterForUEvent(&g_Event), waiterForUEvent(&g_ExitEvent));
 
     if (R_SUCCEEDED(rc))
-    {
-        mutexLock(&g_PrintMutex);
-        printf("Got leftover event %u\n", idx);
-        mutexUnlock(&g_PrintMutex);
-    }
+        locked_printf("Got leftover event %u\n", idx);
 }
 
 int main(int argc, char **argv)
 {
-    gfxInitDefault();
     consoleInit(NULL);
 
     mutexInit(&g_PrintMutex);
     ueventCreate(&g_Event, false);
     ueventCreate(&g_ExitEvent, false);
 
-    locked_print("Creating thread\n");
+    locked_printf("Creating thread\n");
 
     Thread thread;
     Result rc;
-    rc = threadCreate(&thread, (ThreadFunc) threadFunc1, NULL, 0x1000, 0x2C, -2);
+    rc = threadCreate(&thread, threadFunc1, NULL, 0x10000, 0x2C, -2);
 
     if (R_SUCCEEDED(rc))
     {
@@ -73,10 +72,10 @@ int main(int argc, char **argv)
         {
             size_t i;
             for (i=0; i<5; i++) {
-                locked_print("Sleeping for a while\n");
+                locked_printf("Sleeping for a while\n");
                 svcSleepThread(1000000000ull); // 1s
 
-                locked_print("Fire!\n");
+                locked_printf("Fire!\n");
                 ueventSignal(&g_Event);
             }
 
@@ -96,11 +95,9 @@ int main(int argc, char **argv)
         if (kDown & KEY_PLUS)
             break;
 
-        gfxFlushBuffers();
-        gfxSwapBuffers();
-        gfxWaitForVsync();
+        consoleUpdate(NULL);
     }
 
-    gfxExit();
+    consoleExit(NULL);
     return 0;
 }

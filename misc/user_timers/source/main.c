@@ -1,14 +1,21 @@
 #include <stdio.h>
+#include <stdarg.h>
 #include <switch.h>
 
-static UsermodeTimer g_Timer;
-static UsermodeTimer g_FastTimer;
-static UsermodeEvent g_ExitEvent;
+static UTimer g_Timer;
+static UTimer g_FastTimer;
+static UEvent g_ExitEvent;
 static Mutex g_PrintMutex;
 
-void locked_print(const char* str) {
+__attribute__((format(printf, 1, 2)))
+static void locked_printf(const char* fmt, ...)
+{
     mutexLock(&g_PrintMutex);
-    printf(str);
+    va_list va;
+    va_start(va, fmt);
+    vprintf(fmt, va);
+    va_end(va);
+    consoleUpdate(NULL);
     mutexUnlock(&g_PrintMutex);
 }
 
@@ -17,22 +24,22 @@ void threadFunc1(void* arg)
     Result rc;
     int idx;
 
-    locked_print("Entering thread\n");
+    locked_printf("Entering thread\n");
 
     while (1)
     {
-        rc = waitMulti(&idx, -1, waiterForUtimer(&g_Timer), waiterForUtimer(&g_FastTimer), waiterForUevent(&g_ExitEvent));
+        rc = waitMulti(&idx, -1, waiterForUTimer(&g_Timer), waiterForUTimer(&g_FastTimer), waiterForUEvent(&g_ExitEvent));
 
         if (R_SUCCEEDED(rc))
         {
             if (idx == 0) {
-                locked_print("g_Timer triggered!\n");
+                locked_printf("g_Timer triggered!\n");
             }
             else if (idx == 1) {
-                locked_print("g_FasterTimer triggered!\n");
+                locked_printf("g_FasterTimer triggered!\n");
             }
             else {
-                locked_print("g_ExitEvent triggered!\n");
+                locked_printf("g_ExitEvent triggered!\n");
                 break;
             }
         }
@@ -41,19 +48,18 @@ void threadFunc1(void* arg)
 
 int main(int argc, char **argv)
 {
-    gfxInitDefault();
     consoleInit(NULL);
 
     mutexInit(&g_PrintMutex);
-    utimerCreate(&g_Timer, 2000000000, true); // 2s
-    utimerCreate(&g_FastTimer, 1000000000, true); // 1s
+    utimerCreate(&g_Timer, 2000000000, TimerType_Repeating); // 2s
+    utimerCreate(&g_FastTimer, 1000000000, TimerType_Repeating); // 1s
     ueventCreate(&g_ExitEvent, false);
 
-    locked_print("Creating thread\n");
+    locked_printf("Creating thread\n");
 
     Thread thread;
     Result rc;
-    rc = threadCreate(&thread, (ThreadFunc) threadFunc1, NULL, 0x1000, 0x2C, -2);
+    rc = threadCreate(&thread, threadFunc1, NULL, 0x10000, 0x2C, -2);
 
     if (R_SUCCEEDED(rc))
     {
@@ -61,20 +67,22 @@ int main(int argc, char **argv)
 
         if (R_SUCCEEDED(rc))
         {
-            locked_print("Sleeping for 5s\n");
-            svcSleepThread(5000000000ull); // 5s
-
-            locked_print("Stopping timer for 5s\n");
-            utimerStop(&g_Timer);
-            utimerStop(&g_FastTimer);
-            svcSleepThread(5000000000ull); // 5s
-
-            locked_print("Starting timer for 5s\n");
+            locked_printf("Starting timer for 5s\n");
             utimerStart(&g_Timer);
             utimerStart(&g_FastTimer);
             svcSleepThread(5000000000ull); // 5s
 
-            locked_print("Done\n");
+            locked_printf("Stopping timer for 5s\n");
+            utimerStop(&g_Timer);
+            utimerStop(&g_FastTimer);
+            svcSleepThread(5000000000ull); // 5s
+
+            locked_printf("Starting timer for 5s\n");
+            utimerStart(&g_Timer);
+            utimerStart(&g_FastTimer);
+            svcSleepThread(5000000000ull); // 5s
+
+            locked_printf("Done\n");
             ueventSignal(&g_ExitEvent);
 
             threadWaitForExit(&thread);
@@ -92,11 +100,9 @@ int main(int argc, char **argv)
         if (kDown & KEY_PLUS)
             break;
 
-        gfxFlushBuffers();
-        gfxSwapBuffers();
-        gfxWaitForVsync();
+        consoleUpdate(NULL);
     }
 
-    gfxExit();
+    consoleExit(NULL);
     return 0;
 }
