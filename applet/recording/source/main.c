@@ -1,17 +1,34 @@
-#include <string.h>
+// Include the most common headers from the C standard library
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+// Include the main libnx system header, for Switch development
 #include <switch.h>
 
 //See also libnx applet.h. See applet.h for the requirements for using this.
 
+// Define the desired framebuffer resolution (here we set it to 720p).
+#define FB_WIDTH  1280
+#define FB_HEIGHT 720
+
+// Remove above and uncomment below for 1080p
+//#define FB_WIDTH  1920
+//#define FB_HEIGHT 1080
+
 int main(int argc, char **argv)
 {
-    u32* framebuf;
-    u32  cnt=0;
+    // Retrieve the default window
+    NWindow* win = nwindowGetDefault();
 
-    gfxInitDefault();
+    // Create a linear double-buffered framebuffer
+    Framebuffer fb;
+    framebufferCreate(&fb, win, FB_WIDTH, FB_HEIGHT, PIXEL_FORMAT_RGBA_8888, 2);
+    framebufferMakeLinear(&fb);
 
     appletInitializeGamePlayRecording();//Normally this is only recording func you need to call.
+
+    u32 cnt = 0;
 
     while(appletMainLoop())
     {
@@ -30,34 +47,29 @@ int main(int argc, char **argv)
             appletSetGamePlayRecordingState(1);//Enable recording.
         }
 
-        u32 width, height;
-        u32 pos;
-        framebuf = (u32*) gfxGetFramebuffer((u32*)&width, (u32*)&height);
+        // Retrieve the framebuffer
+        u32 stride;
+        u32* framebuf = (u32*) framebufferBegin(&fb, &stride);
 
-        if(cnt==60)
-        {
-            cnt=0;
-        }
+        if (cnt != 60)
+            cnt ++;
         else
-        {
-            cnt++;
-        }
+            cnt = 0;
 
-        //Each pixel is 4-bytes due to RGBA8888.
-        u32 x, y;
-        for (y=0; y<height; y++)//Access the buffer linearly.
+        // Each pixel is 4-bytes due to RGBA8888.
+        for (u32 y = 0; y < FB_HEIGHT; y ++)
         {
-            for (x=0; x<width; x++)
+            for (u32 x = 0; x < FB_WIDTH; x ++)
             {
-                pos = y * width + x;
+                u32 pos = y * stride / sizeof(u32) + x;
                 framebuf[pos] = 0x01010101 * cnt * 4;//Set framebuf to different shades of grey.
             }
         }
 
-        gfxFlushBuffers();
-        gfxSwapBuffers();
+        // We're done rendering, so we end the frame here.
+        framebufferEnd(&fb);
     }
 
-    gfxExit();
+    framebufferClose(&fb);
     return 0;
 }
