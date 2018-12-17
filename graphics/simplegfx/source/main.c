@@ -1,71 +1,82 @@
-#include <string.h>
+// Include the most common headers from the C standard library
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+// Include the main libnx system header, for Switch development
 #include <switch.h>
 
 #ifdef DISPLAY_IMAGE
 #include "image_bin.h"//Your own raw RGB888 1280x720 image at "data/image.bin" is required.
 #endif
 
-//See also libnx gfx.h.
+// See also libnx display/framebuffer.h.
 
-int main(int argc, char **argv)
+// Define the desired framebuffer resolution (here we set it to 720p).
+#define FB_WIDTH  1280
+#define FB_HEIGHT 720
+
+// Remove above and uncomment below for 1080p
+//#define FB_WIDTH  1920
+//#define FB_HEIGHT 1080
+
+// Main program entrypoint
+int main(int argc, char* argv[])
 {
-    u32* framebuf;
-    u32  cnt=0;
-    #ifdef DISPLAY_IMAGE
-    u8*  imageptr = (u8*)image_bin;
-    #endif
+    // Retrieve the default window
+    NWindow* win = nwindowGetDefault();
 
-    //Enable max-1080p support. Remove for 720p-only resolution.
-    //gfxInitResolutionDefault();
+    // Create a linear double-buffered framebuffer
+    Framebuffer fb;
+    framebufferCreate(&fb, win, FB_WIDTH, FB_HEIGHT, PIXEL_FORMAT_RGBA_8888, 2);
+    framebufferMakeLinear(&fb);
 
-    gfxInitDefault();
+#ifdef DISPLAY_IMAGE
+    u8* imageptr = (u8*)image_bin;
+#endif
 
-    //Set current resolution automatically depending on current/changed OperationMode. Only use this when using gfxInitResolution*().
-    //gfxConfigureAutoResolutionDefault(true);
+    u32 cnt = 0;
 
-    while(appletMainLoop())
+    // Main loop
+    while (appletMainLoop())
     {
-        //Scan all the inputs. This should be done once for each frame
+        // Scan all the inputs. This should be done once for each frame
         hidScanInput();
 
-        //hidKeysDown returns information about which buttons have been just pressed (and they weren't in the previous frame)
+        // hidKeysDown returns information about which buttons have been
+        // just pressed in this frame compared to the previous one
         u64 kDown = hidKeysDown(CONTROLLER_P1_AUTO);
 
-        if (kDown & KEY_PLUS) break; // break in order to return to hbmenu
+        if (kDown & KEY_PLUS)
+            break; // break in order to return to hbmenu
 
-        u32 width, height;
-        u32 pos;
-        framebuf = (u32*) gfxGetFramebuffer((u32*)&width, (u32*)&height);
+        // Retrieve the framebuffer
+        u32 stride;
+        u32* framebuf = (u32*) framebufferBegin(&fb, &stride);
 
-        if(cnt==60)
-        {
-            cnt=0;
-        }
+        if (cnt != 60)
+            cnt ++;
         else
-        {
-            cnt++;
-        }
+            cnt = 0;
 
-        //Each pixel is 4-bytes due to RGBA8888.
-        u32 x, y;
-        for (y=0; y<height; y++)//Access the buffer linearly.
+        // Each pixel is 4-bytes due to RGBA8888.
+        for (u32 y = 0; y < FB_HEIGHT; y ++)
         {
-            for (x=0; x<width; x++)
+            for (u32 x = 0; x < FB_WIDTH; x ++)
             {
-                pos = y * width + x;
-                #ifdef DISPLAY_IMAGE
+                u32 pos = y * stride / sizeof(u32) + x;
+#ifdef DISPLAY_IMAGE
                 framebuf[pos] = RGBA8_MAXALPHA(imageptr[pos*3+0]+(cnt*4), imageptr[pos*3+1], imageptr[pos*3+2]);
-                #else
+#else
                 framebuf[pos] = 0x01010101 * cnt * 4;//Set framebuf to different shades of grey.
-                #endif
+#endif
             }
         }
 
-        gfxFlushBuffers();
-        gfxSwapBuffers();
+        // We're done rendering, so we end the frame here.
+        framebufferEnd(&fb);
     }
 
-    gfxExit();
+    framebufferClose(&fb);
     return 0;
 }

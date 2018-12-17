@@ -1,12 +1,17 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <stdarg.h>
 #include <switch.h>
 
 #include <ft2build.h>
 #include FT_FREETYPE_H
 
 //See also libnx pl.h.
+
+// Define the desired framebuffer resolution (here we set it to 720p).
+#define FB_WIDTH  1280
+#define FB_HEIGHT 720
 
 //This requires the switch-freetype package.
 //Freetype code here is based on the example code from freetype docs.
@@ -38,7 +43,7 @@ void draw_glyph(FT_Bitmap* bitmap, u32* framebuf, u32 x, u32 y)
 
 //Note that this doesn't handle {tmpx > width}, etc.
 //str is UTF-8.
-void draw_text(FT_Face face, u32* framebuf, u32 x, u32 y, const uint8_t* str)
+void draw_text(FT_Face face, u32* framebuf, u32 x, u32 y, const char* str)
 {
     u32 tmpx = x;
     FT_Error ret=0;
@@ -46,13 +51,13 @@ void draw_text(FT_Face face, u32* framebuf, u32 x, u32 y, const uint8_t* str)
     FT_GlyphSlot slot = face->glyph;
 
     u32 i;
-    u32 str_size = strlen((const char*)str);
+    u32 str_size = strlen(str);
     uint32_t tmpchar;
     ssize_t unitcount=0;
 
     for (i = 0; i < str_size; )
     {
-        unitcount = decode_utf8 (&tmpchar, &str[i]);
+        unitcount = decode_utf8 (&tmpchar, (const uint8_t*)&str[i]);
         if (unitcount <= 0) break;
         i+= unitcount;
 
@@ -86,84 +91,112 @@ void draw_text(FT_Face face, u32* framebuf, u32 x, u32 y, const uint8_t* str)
     }
 }
 
+__attribute__((format(printf, 1, 2)))
+static int error_screen(const char* fmt, ...)
+{
+    consoleInit(NULL);
+    va_list va;
+    va_start(va, fmt);
+    vprintf(fmt, va);
+    va_end(va);
+    printf("Press PLUS to exit\n");
+    while (appletMainLoop())
+    {
+        hidScanInput();
+        if (hidKeysDown(CONTROLLER_P1_AUTO) & KEY_PLUS)
+            break;
+        consoleUpdate(NULL);
+    }
+    consoleExit(NULL);
+    return EXIT_FAILURE;
+}
+
+static u64 getSystemLanguage(void)
+{
+    Result rc;
+    u64 code = 0;
+
+    rc = setInitialize();
+    if (R_SUCCEEDED(rc)) {
+        rc = setGetSystemLanguage(&code);
+        setExit();
+    }
+
+    return R_SUCCEEDED(rc) ? code : 0;
+}
+
+// LanguageCode is only needed with shared-font when using plGetSharedFont.
+static u64 LanguageCode;
+
+void userAppInit(void)
+{
+    Result rc;
+
+    rc = plInitialize();
+    if (R_FAILED(rc))
+        fatalSimple(rc);
+
+    LanguageCode = getSystemLanguage();
+}
+
+void userAppExit(void)
+{
+    plExit();
+}
+
 int main(int argc, char **argv)
 {
     Result rc=0;
-    u32* framebuf;
+    FT_Error ret=0;
 
-    u64 LanguageCode=0;
-    PlFontData font;
+    //Use this when using multiple shared-fonts.
+    /*
     PlFontData fonts[PlSharedFontType_Total];
     size_t total_fonts=0;
-    FT_Error ret=0, libret=1, faceret=1;
+    rc = plGetSharedFont(LanguageCode, fonts, PlSharedFontType_Total, &total_fonts);
+    if (R_FAILED(rc))
+        return error_screen("plGetSharedFont() failed: 0x%x\n", rc);
+    */
+
+    // Use this when you want to use specific shared-font(s). Since this example only uses 1 font, only the font loaded by this will be used.
+    PlFontData font;
+    rc = plGetSharedFontByType(&font, PlSharedFontType_Standard);
+    if (R_FAILED(rc))
+        return error_screen("plGetSharedFontByType() failed: 0x%x\n", rc);
+
     FT_Library library;
+    ret = FT_Init_FreeType(&library);
+    if (ret)
+        return error_screen("FT_Init_FreeType() failed: %d\n", ret);
+
     FT_Face face;
-
-    gfxInitDefault();
-    consoleInit(NULL);
-
-    rc = setInitialize();//Only needed with shared-font when using plGetSharedFont.
-    if (R_SUCCEEDED(rc)) rc = setGetSystemLanguage(&LanguageCode);
-    setExit();
-
-    if (R_FAILED(rc)) printf("Failed to get system-language: 0x%x\n", rc);
-
-    if (R_SUCCEEDED(rc))
-    {
-        rc = plInitialize();
-        if (R_FAILED(rc)) printf("plInitialize() failed: 0x%x\n", rc);
-
-        if (R_SUCCEEDED(rc))
-        {
-            //Use this when using multiple shared-fonts.
-            rc = plGetSharedFont(LanguageCode, fonts, PlSharedFontType_Total, &total_fonts);
-            if (R_FAILED(rc)) printf("plGetSharedFont() failed: 0x%x\n", rc);
-
-            //Use this when you want to use specific shared-font(s). Since this example only uses 1 font, only the font loaded by this will be used.
-            rc = plGetSharedFontByType(&font, PlSharedFontType_Standard);
-            if (R_FAILED(rc)) printf("plGetSharedFontByType() failed: 0x%x\n", rc);
-
-            if (R_SUCCEEDED(rc))
-            {
-                ret = FT_Init_FreeType(&library);
-                libret = ret;
-                if (ret) printf("FT_Init_FreeType() failed: %d\n", ret);
-
-                if (ret==0)
-                {
-                    ret = FT_New_Memory_Face( library,
-                                              font.address,    /* first byte in memory */
-                                              font.size,       /* size in bytes        */
-                                              0,               /* face_index           */
-                                              &face);
-
-                    faceret = ret;
-                    if (ret) printf("FT_New_Memory_Face() failed: %d\n", ret);
-
-                    if (ret==0)
-                    {
-                        ret = FT_Set_Char_Size(
-                                face,    /* handle to face object           */
-                                0,       /* char_width in 1/64th of points  */
-                                8*64,    /* char_height in 1/64th of points */
-                                300,     /* horizontal device resolution    */
-                                300);    /* vertical device resolution      */
-
-                        if (ret) printf("FT_Set_Char_Size() failed: %d\n", ret);
-                    }
-                }
-            }
-        }
+    ret = FT_New_Memory_Face( library,
+                              font.address,    /* first byte in memory */
+                              font.size,       /* size in bytes        */
+                              0,               /* face_index           */
+                              &face);
+    if (ret) {
+        FT_Done_FreeType(library);
+        return error_screen("FT_New_Memory_Face() failed: %d\n", ret);
     }
 
-    if (R_SUCCEEDED(rc) && ret==0)
-    {
-        //Switch to using regular framebuffer.
-        consoleClear();
-        gfxSetMode(GfxMode_LinearDouble);
+    ret = FT_Set_Char_Size(
+            face,    /* handle to face object           */
+            0,       /* char_width in 1/64th of points  */
+            24*64,   /* char_height in 1/64th of points */
+            96,      /* horizontal device resolution    */
+            96);     /* vertical device resolution      */
+    if (ret) {
+        FT_Done_Face(face);
+        FT_Done_FreeType(library);
+        return error_screen("FT_Set_Char_Size() failed: %d\n", ret);
     }
 
-    while(appletMainLoop())
+    Framebuffer fb;
+    framebufferCreate(&fb, nwindowGetDefault(), FB_WIDTH, FB_HEIGHT, PIXEL_FORMAT_RGBA_8888, 2);
+    framebufferMakeLinear(&fb);
+
+    while (appletMainLoop())
     {
         //Scan all the inputs. This should be done once for each frame
         hidScanInput();
@@ -173,20 +206,18 @@ int main(int argc, char **argv)
 
         if (kDown & KEY_PLUS) break; // break in order to return to hbmenu
 
-        framebuf = (u32*) gfxGetFramebuffer(&framebuf_width, NULL);
+        u32 stride;
+        u32* framebuf = (u32*)framebufferBegin(&fb, &stride);
+        framebuf_width = stride / sizeof(u32);
 
-        memset(framebuf, 0, gfxGetFramebufferSize());
+        memset(framebuf, 0, stride*FB_HEIGHT);
+        draw_text(face, framebuf, 64, 64, u8"The quick brown fox jumps over the lazy dog. ファイル\ntest Test");
 
-        if (R_SUCCEEDED(rc) && ret==0) draw_text(face, framebuf, 64, 64, (const uint8_t*)"The quick brown fox jumps over the lazy dog. ファイル\ntest Test");
-
-        gfxFlushBuffers();
-        gfxSwapBuffers();
+        framebufferEnd(&fb);
     }
 
-    if (faceret==0) FT_Done_Face(face);
-    if (libret==0) FT_Done_FreeType(library);
-
-    plExit();
-    gfxExit();
+    framebufferClose(&fb);
+    FT_Done_Face(face);
+    FT_Done_FreeType(library);
     return 0;
 }
