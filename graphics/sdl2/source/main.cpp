@@ -88,8 +88,8 @@ int main(int argc, char *argv[])
                             } else {
                                 SDL_SetWindowSize(window, 1920, 1080);
                             }
-                        } else if (event.jbutton.button == 1) {
-                            // (B) button down
+                        } else if (event.jbutton.button == 10) {
+                            // (+) button down
                             done = 1;
                         }
                     }
