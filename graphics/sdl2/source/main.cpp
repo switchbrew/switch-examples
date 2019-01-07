@@ -78,8 +78,8 @@ int main(int argc, char *argv[])
                 case SDL_JOYBUTTONDOWN:
                     SDL_Log("Joystick %d button %d down\n",
                             event.jbutton.which, event.jbutton.button);
-                    // seek for joystick #0
                     // https://github.com/devkitPro/SDL/blob/switch-sdl2/src/joystick/switch/SDL_sysjoystick.c#L52
+                    // seek for joystick #0
                     if (event.jbutton.which == 0) {
                         if (event.jbutton.button == 0) {
                             // (A) button down
