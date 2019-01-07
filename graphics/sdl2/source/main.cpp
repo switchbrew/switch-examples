@@ -3,37 +3,6 @@
 
 #include <SDL.h>
 
-static SDL_DisplayMode modes[5];
-
-static int mode_count = 0, current_mode = 0;
-
-void print_info(SDL_Window *window, SDL_Renderer *renderer)
-{
-    int w, h;
-    SDL_DisplayMode mode;
-
-    SDL_GetWindowSize(window, &w, &h);
-    SDL_Log("window size: %i x %i\n", w, h);
-    SDL_GetRendererOutputSize(renderer, &w, &h);
-    SDL_Log("renderer size: %i x %i\n", w, h);
-
-    SDL_GetCurrentDisplayMode(0, &mode);
-    SDL_Log("display mode: %i x %i @ %i bpp (%s)",
-            mode.w, mode.h,
-            SDL_BITSPERPIXEL(mode.format),
-            SDL_GetPixelFormatName(mode.format));
-}
-
-void change_mode(SDL_Window *window)
-{
-    current_mode++;
-    if (current_mode == mode_count) {
-        current_mode = 0;
-    }
-
-    SDL_SetWindowDisplayMode(window, &modes[current_mode]);
-}
-
 void draw_rects(SDL_Renderer *renderer, int x, int y)
 {
     // R
@@ -57,7 +26,7 @@ int main(int argc, char *argv[])
     SDL_Event event;
     SDL_Window *window;
     SDL_Renderer *renderer;
-    int done = 0, x = 0, w, h;
+    int done = 0, x = 0, w = 1920, h = 1080;
 
     // mandatory at least on switch, else gfx is not properly closed
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_JOYSTICK) < 0) {
@@ -65,14 +34,12 @@ int main(int argc, char *argv[])
         return -1;
     }
 
-    // create a window (OpenGL always enabled)
+    // create an SDL window (OpenGL ES2 always enabled)
+    // when SDL_FULLSCREEN flag is not set, viewport is automatically handled by SDL (use SDL_SetWindowSize to "change resolution")
     // available switch SDL2 video modes :
-    // 1920 x 1080 @ 32 bpp (SDL_PIXELFORMAT_RGBA8888) (docked only)
+    // 1920 x 1080 @ 32 bpp (SDL_PIXELFORMAT_RGBA8888)
     // 1280 x 720 @ 32 bpp (SDL_PIXELFORMAT_RGBA8888)
-    // 960 x 540 @ 32 bpp (SDL_PIXELFORMAT_RGBA8888)
-    // 800 x 600 @ 32 bpp (SDL_PIXELFORMAT_RGBA8888)
-    // 640 x 480 @ 32 bpp (SDL_PIXELFORMAT_RGBA8888)
-    window = SDL_CreateWindow("sdl2_gles2", 0, 0, 640, 480, SDL_WINDOW_FULLSCREEN);
+    window = SDL_CreateWindow("sdl2_gles2", 0, 0, 1920, 1080, 0);
     if (!window) {
         SDL_Log("SDL_CreateWindow: %s\n", SDL_GetError());
         SDL_Quit();
@@ -85,15 +52,6 @@ int main(int argc, char *argv[])
         SDL_Log("SDL_CreateRenderer: %s\n", SDL_GetError());
         SDL_Quit();
         return -1;
-    }
-
-    // print some info about display/window/renderer, for "educational purpose"
-    print_info(window, renderer);
-
-    // list available display modes, for "educational purpose"
-    mode_count = SDL_GetNumDisplayModes(0);
-    for (int i = 0; i < mode_count; i++) {
-        SDL_GetDisplayMode(0, i, &modes[i]);
     }
 
     // open CONTROLLER_PLAYER_1 and CONTROLLER_PLAYER_2
@@ -120,15 +78,20 @@ int main(int argc, char *argv[])
                 case SDL_JOYBUTTONDOWN:
                     SDL_Log("Joystick %d button %d down\n",
                             event.jbutton.which, event.jbutton.button);
-                    // seek for joystick #0 down (A)
+                    // seek for joystick #0
                     // https://github.com/devkitPro/SDL/blob/switch-sdl2/src/joystick/switch/SDL_sysjoystick.c#L52
-                    if (event.jbutton.which == 0 && event.jbutton.button == 0) {
-                        change_mode(window);
-                        print_info(window, renderer);
-                    }
-                    // seek for joystick #0 down (B)
-                    if (event.jbutton.which == 0 && event.jbutton.button == 1) {
-                        done = 1;
+                    if (event.jbutton.which == 0) {
+                        if (event.jbutton.button == 0) {
+                            // (A) button down
+                            if(w == 1920) {
+                                SDL_SetWindowSize(window, 1280, 720);
+                            } else {
+                                SDL_SetWindowSize(window, 1920, 1080);
+                            }
+                        } else if (event.jbutton.button == 1) {
+                            // (B) button down
+                            done = 1;
+                        }
                     }
                     break;
 
@@ -140,9 +103,9 @@ int main(int argc, char *argv[])
         SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
         SDL_RenderClear(renderer);
 
-        // Fill renderer bounds
+        // fill window bounds
         SDL_SetRenderDrawColor(renderer, 111, 111, 111, 255);
-        SDL_GetRendererOutputSize(renderer, &w, &h);
+        SDL_GetWindowSize(window, &w, &h);
         SDL_Rect f = {0, 0, w, h};
         SDL_RenderFillRect(renderer, &f);
 
