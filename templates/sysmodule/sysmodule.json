@@ -8,7 +8,7 @@
 	"default_cpu_id":	3,
 	"process_category":	0,
 	"is_retail":	true,
-	"pool_partition":	0,
+	"pool_partition":	2,
 	"is_64_bit":	true,
 	"address_space_type":	1,
 	"filesystem_access":	{
