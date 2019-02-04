@@ -7,7 +7,7 @@
 // Include the main libnx system header, for Switch development
 #include <switch.h>
 
-// See also libnx web_wifi.h.
+// See also libnx web.h.
 
 // This example shows how to use the WebWifiAuth LibraryApplet.
 
