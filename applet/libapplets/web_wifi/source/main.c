@@ -32,7 +32,6 @@ int main(int argc, char* argv[])
     // Set the initial URL that the applet will navigate too.
     webWifiCreate(&config, "http://example.org/");
 
-
     printf("Running webWifiShow...\n");
     rc = webWifiShow(&config);
     printf("webWifiShow(): 0x%x\n", rc);
