@@ -18,7 +18,7 @@ int main(int argc, char* argv[])
 
     // This example uses a text console, as a simple way to output text to the screen.
     // If you want to write a software-rendered graphics application,
-    //   take a look at the graphics/simplegfx example, which uses the libnx gfx API instead.
+    //   take a look at the graphics/simplegfx example, which uses the libnx Framebuffer API instead.
     // If on the other hand you want to write an OpenGL based application,
     //   take a look at the graphics/opengl set of examples, which uses EGL instead.
     consoleInit(NULL);
@@ -27,19 +27,11 @@ int main(int argc, char* argv[])
 
     consoleUpdate(NULL);
 
-    WebWifiConfig config;
-
-    // Set the initial URL that the applet will navigate too.
-    webWifiCreate(&config, "http://example.org/");
-
-    printf("Running webWifiShow...\n");
-    rc = webWifiShow(&config);
-    printf("webWifiShow(): 0x%x\n", rc);
-
+    printf("Press A to launch WebWifiAuth applet.\n");
     printf("Press + to exit.\n");
 
     // Main loop
-    while (appletMainLoop())//This loop will automatically exit when applet requests exit.
+    while (appletMainLoop())
     {
         // Scan all the inputs. This should be done once for each frame
         hidScanInput();
@@ -50,6 +42,17 @@ int main(int argc, char* argv[])
 
         if (kDown & KEY_PLUS)
             break; // break in order to return to hbmenu
+
+        if (kDown & KEY_A) {
+            WebWifiConfig config;
+
+            // Set the initial URL that the applet will navigate too.
+            webWifiCreate(&config, "http://example.org/");
+
+            printf("Running webWifiShow...\n");
+            rc = webWifiShow(&config);
+            printf("webWifiShow(): 0x%x\n", rc);
+        }
 
         // Your code goes here
 
