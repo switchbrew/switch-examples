@@ -48,16 +48,12 @@ CFLAGS	:=	-g -Wall -O2 -ffunction-sections \
 
 CFLAGS	+=	$(INCLUDE) -D__SWITCH__
 
-# The following line works around an issue in newlib that produces a compilation
-# error in glm. It will be removed as soon as this issue is resolved.
-CFLAGS	+=	-D_GLIBCXX_USE_C99_MATH_TR1 -D_LDBL_EQ_DBL
-
 CXXFLAGS	:= $(CFLAGS) -fno-rtti -fno-exceptions
 
 ASFLAGS	:=	-g $(ARCH)
 LDFLAGS	=	-specs=$(DEVKITPRO)/libnx/switch.specs -g $(ARCH) -Wl,-Map,$(notdir $*.map)
 
-LIBS	:= -lglad -lEGL -lglapi -ldrm_nouveau -lnx -lm
+LIBS	:= -lnx
 
 #---------------------------------------------------------------------------------
 # list of directories containing libraries, this must be the top level containing
@@ -150,7 +146,6 @@ all: $(BUILD)
 $(BUILD):
 	@[ -d $@ ] || mkdir -p $@
 	@$(MAKE) --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile
-	/d/Games/2017_Switch/canary/yuzu-cmd.exe $(TARGET).nro
 
 #---------------------------------------------------------------------------------
 clean:
@@ -191,21 +186,6 @@ $(OFILES_SRC)	: $(HFILES_BIN)
 	@echo $(notdir $<)
 	@$(bin2o)
 
-#---------------------------------------------------------------------------------
-%.png.o	%_png.h :	%.png
-#---------------------------------------------------------------------------------
-	@echo $(notdir $<)
-	@$(bin2o)
-	
-#---------------------------------------------------------------------------------
-%.3Dobj.o	%_3Dobj.h :	%.3Dobj
-#---------------------------------------------------------------------------------	
-	@echo $(notdir $<)
-	@perl $(CURDIR)/../Obj2Bin.pl $(CURDIR)/../data/$(notdir $<) -o $(CURDIR)/$(basename $(notdir $<) )
-	@$(CXX) $(CXXFLAGS) -c $(CURDIR)/$(basename $(notdir $<) ).3Dobj.cpp -o $(CURDIR)/$(basename $(notdir $<) ).3Dobj.o $(ERROR_FILTER)
-	@rm -f $(CURDIR)/$(basename $(notdir $<) ).3Dobj.cpp
-	@mv $(CURDIR)/$(basename $(notdir $<) ).3Dobj.h $(CURDIR)/$(basename $(notdir $<) )_3Dobj.h
-	
 -include $(DEPENDS)
 
 #---------------------------------------------------------------------------------------
