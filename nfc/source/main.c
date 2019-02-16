@@ -9,6 +9,10 @@
 
 // See also libnx nfc.h.
 
+// Hardcoded for Super Smash Bros. Ultimate.
+// See also https://switchbrew.org/wiki/NFC_services#Application_IDs.
+#define APP_ID 0x34f80200
+
 // Indefinitely wait for an event to be signaled
 // Break when + is pressed, or if the application should quit (in this case, return value will be non-zero)
 Result eventWaitLoop(Event *event) {
@@ -24,11 +28,144 @@ Result eventWaitLoop(Event *event) {
 
 // Print raw data as hexadecimal numbers.
 void print_hex(void *buf, size_t size) {
-    u8 *data = (u8 *)buf;
     for (size_t i=0; i<size; i++)
-        printf("%02X", data[i]);
+        printf("%02X", ((char *)buf)[i]);
     printf("\n");
     consoleUpdate(NULL);
+}
+
+Result process_amiibo(void) {
+    Result rc = 0;
+
+    // Get the handle of the first controller with NFC capabilities.
+    HidControllerID controller = 0;
+    if (R_SUCCEEDED(rc)) {
+        u32 device_count;
+        rc = nfpuListDevices(&device_count, &controller, 1);
+
+        if (R_FAILED(rc))
+            return rc;
+    }
+
+    // Get the activation event. This is signaled when a tag is detected.
+    Event activate_event = {0};
+    if (R_FAILED(nfpuAttachActivateEvent(controller, &activate_event)))
+        goto fail_0;
+
+    // Get the deactivation event. This is signaled when a tag is removed.
+    Event deactivate_event = {0};
+    if (R_FAILED(nfpuAttachDeactivateEvent(controller, &deactivate_event)))
+        goto fail_1;
+
+    NfpuState state = 0;
+    if (R_SUCCEEDED(rc)) {
+        rc = nfpuGetState(&state);
+
+        if (R_SUCCEEDED(rc) && (state == NfpuState_NonInitialized)) {
+            printf("Bad nfpu state: %u\n", state);
+            consoleUpdate(NULL);
+            rc = -1;
+        }
+    }
+
+    NfpuDeviceState device_state = 0;
+    if (R_SUCCEEDED(rc)) {
+        rc = nfpuGetDeviceState(controller, &device_state);
+
+        if (R_SUCCEEDED(rc) && (device_state > NfpuDeviceState_TagFound)) {
+            printf("Bad nfpu device state: %u\n", device_state);
+            consoleUpdate(NULL);
+            rc = -1;
+        }
+    }
+
+    if (R_FAILED(rc))
+        goto fail_1;
+
+    // Start the detection of tags.
+    rc = nfpuStartDetection(controller);
+    if (R_SUCCEEDED(rc)) {
+        printf("Scanning for a tag...\n");
+        consoleUpdate(NULL);
+    }
+
+    // Wait until a tag is detected.
+    // You could also wait until nfpuGetDeviceState returns NfpuDeviceState_TagFound.
+    if (R_SUCCEEDED(rc)) {
+        rc = eventWaitLoop(&activate_event);
+
+        if (R_SUCCEEDED(rc)) {
+            printf("A tag was detected, please do not remove it from the NFC spot.\n");
+            consoleUpdate(NULL);
+        }
+    }
+
+    // If a tag was successfully detected, load it into memory.
+    if (R_SUCCEEDED(rc))
+        rc = nfpuMount(controller, NfpuDeviceType_Amiibo, NfpuMountTarget_All);
+
+    // Retrieve the model info data, which contains the amiibo id.
+    if (R_SUCCEEDED(rc)) {
+        NfpuModelInfo model_info = {0};
+        rc = nfpuGetModelInfo(controller, &model_info);
+
+        if (R_SUCCEEDED(rc)) {
+            printf("Amiibo ID: ");
+            print_hex(model_info.amiibo_id, 8);
+        }
+    }
+
+    // Retrieve the common info data, which contains the application area size.
+    u32 app_area_size = 0;
+    if (R_SUCCEEDED(rc)) {
+        NfpuCommonInfo common_info = {0};
+        rc = nfpuGetCommonInfo(controller, &common_info);
+
+        if (R_SUCCEEDED(rc))
+            app_area_size = common_info.application_area_size;
+    }
+
+    u32 npad_id = 0;
+    if (R_SUCCEEDED(rc)) {
+        rc = nfpuOpenApplicationArea(controller, APP_ID, &npad_id);
+
+        if (rc == 0x10073) // 2115-0128
+            printf("This tag contains no application data.\n");
+        if (rc == 0x13073) // 2115-0152
+            printf("This tag contains application data associated with an ID other than 0x%x.\n", APP_ID);
+    }
+
+    u8 app_area[0xd8] = {0}; // Maximum size of the application area.
+    if (R_SUCCEEDED(rc)) {
+        rc = nfpuGetApplicationArea(controller, app_area, app_area_size);
+
+        if (R_SUCCEEDED(rc)) {
+            printf("App area:\n");
+            print_hex(app_area, app_area_size);
+        }
+    }
+
+    // Wait until the tag is removed.
+    // You could also wait until nfpuGetDeviceState returns NfpuDeviceState_TagRemoved.
+    if (R_SUCCEEDED(rc)) {
+        printf("You can now remove the tag.\n");
+        consoleUpdate(NULL);
+        eventWaitLoop(&deactivate_event);
+    }
+
+    // Unmount the tag.
+    nfpuUnmount(controller);
+
+    // Stop the detection of tags.
+    nfpuStopDetection(controller);
+
+    // Cleanup.
+fail_1:
+    eventClose(&deactivate_event);
+fail_0:
+    eventClose(&activate_event);
+
+    return rc;
 }
 
 // Main program entrypoint
@@ -44,12 +181,11 @@ int main(int argc, char* argv[])
     consoleInit(NULL);
 
     printf("NFC example program.\n");
-    printf("Scan an amiibo tag to display its character.\n");
-    printf("Press + to exit.\n\n");
+    printf("Scan an amiibo tag to display information about it.\n\n");
     consoleUpdate(NULL);
 
     // Initialize the nfp:user and nfc:user services.
-    rc = nfpuInitialize();
+    rc = nfpuInitialize(NULL);
 
     // Check if NFC is enabled. If not, wait until it is.
     if (R_SUCCEEDED(rc)) {
@@ -72,93 +208,44 @@ int main(int argc, char* argv[])
         }
     }
 
-    // Get the handle of the first controller with NFC capabilities.
-    HidControllerID controller = 0;
-    if (R_SUCCEEDED(rc)) {
-        u32 device_count;
-        rc = nfpuListDevices(&device_count, &controller, 1);
-    }
-
     if (R_FAILED(rc))
-        goto fail_0;
+        goto fail_main;
 
-    // Get the activation event. This is signaled when a tag is detected.
-    Event activate_event = {0};
-    if (R_FAILED(nfpuAttachActivateEvent(controller, &activate_event)))
-        goto fail_1;
+    printf("Press A to process an amiibo.\n");
+    printf("Press + at any time to exit.\n");
+    printf("Waiting for user input...\n\n");
+    consoleUpdate(NULL);
 
-    // Get the deactivation event. This is signaled when a tag is removed.
-    Event deactivate_event = {0};
-    if (R_FAILED(nfpuAttachDeactivateEvent(controller, &deactivate_event)))
-        goto fail_2;
-
-    // Start the detection of tags.
-    rc = nfpuStartDetection(controller);
-    if (R_SUCCEEDED(rc)) {
-        printf("Scanning for a tag...\n");
-        consoleUpdate(NULL);
-    }
-
-    // Wait until a tag is detected.
-    if (R_SUCCEEDED(rc)) {
-        rc = eventWaitLoop(&activate_event);
-        if (R_SUCCEEDED(rc)) {
-            printf("A tag was detected, please do not remove it from the NFC spot.\n");
-            consoleUpdate(NULL);
-        }
-    }
-
-    // If a tag was successfully detected, load it into memory.
-    if (R_SUCCEEDED(rc))
-        rc = nfpuMount(controller, NfpuDeviceType_Amiibo, NfpuMountTarget_All);
-
-    // Retrieve the model info data, which contains the amiibo id.
-    if (R_SUCCEEDED(rc)) {
-        NfpuModelInfo model_info = {0};
-        rc = nfpuGetModelInfo(controller, &model_info);
-        
-        if (R_SUCCEEDED(rc)) {
-            printf("Amiibo ID: ");
-            print_hex(model_info.amiibo_id, 8);
-            consoleUpdate(NULL);
-        }
-    }
-    
-    if (R_SUCCEEDED(rc)) {
-        printf("You can now remove the tag.\n");
-        consoleUpdate(NULL);
-        eventWaitLoop(&deactivate_event);
-    }
-
-    // If an error happened during detection/reading, print it.
-    if (R_FAILED(rc))
-        printf("Error: 0x%x.\n", rc);
-    
-    // Unmount the tag.
-    nfpuUnmount(controller);
-
-    // Stop the detection of tags.
-    nfpuStopDetection(controller);
-
-    // Wait for the user to explicitely exit.
-    printf("Press + to exit.\n");
+    // Main loop
     while (appletMainLoop()) {
+        // Scan all the inputs. This should be done once for each frame
         hidScanInput();
+
+        // hidKeysDown returns information about which buttons have been
+        // just pressed in this frame compared to the previous one
+        if (hidKeysDown(CONTROLLER_P1_AUTO) & KEY_A) {
+            rc = process_amiibo();
+
+            // If an error happened, print it.
+            if (R_FAILED(rc))
+                printf("Error: 0x%x.\n", rc);
+
+            printf("Waiting for user input...\n\n");
+        }
+
+        // If + was pressed to exit an eventWaitLoop(), we also catch it here.
         if (hidKeysDown(CONTROLLER_P1_AUTO) & KEY_PLUS)
-            break;
+            break; // break in order to return to hbmenu
 
         // Update the console, sending a new frame to the display
         consoleUpdate(NULL);
     }
 
-    // Cleanup.
-fail_2: 
-    eventClose(&deactivate_event);
-fail_1:
-    eventClose(&activate_event);
-fail_0:
+fail_main:
     nfpuExit();
+
     // Deinitialize and clean up resources used by the console (important!)
     consoleExit(NULL);
+
     return 0;
 }
