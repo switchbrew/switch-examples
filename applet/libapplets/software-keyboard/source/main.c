@@ -21,6 +21,26 @@ SwkbdTextCheckResult validate_text(char* tmp_string, size_t tmp_string_size) {
     return SwkbdTextCheckResult_OK;
 }
 
+// The rest of these callbacks are for swkbd-inline.
+void finishinit_cb(void) {
+    printf("reply: FinishedInitialize\n");
+}
+
+// String changed callback.
+void strchange_cb(const char* str, SwkbdChangedStringArg* arg) {
+    printf("reply: ChangedString. str = %s, arg->stringLen = 0x%x, arg->dicStartCursorPos = 0x%x, arg->dicEndCursorPos = 0x%x, arg->arg->cursorPos = 0x%x\n", str, arg->stringLen, arg->dicStartCursorPos, arg->dicEndCursorPos, arg->cursorPos);
+}
+
+// Moved cursor callback.
+void movedcursor_cb(const char* str, SwkbdMovedCursorArg* arg) {
+    printf("reply: MovedCursor. str = %s, arg->stringLen = 0x%x, arg->cursorPos = 0x%x\n", str, arg->stringLen, arg->cursorPos);
+}
+
+// Text submitted callback, this is used to get the output text from submit.
+void decidedenter_cb(const char* str, SwkbdDecidedEnterArg* arg) {
+    printf("reply: DecidedEnter. str = %s, arg->stringLen = 0x%x\n", str, arg->stringLen);
+}
+
 // Main program entrypoint
 int main(int argc, char* argv[])
 {
@@ -74,10 +94,49 @@ int main(int argc, char* argv[])
         swkbdClose(&kbd);
     }
 
+    // The rest of this example shows how to use swkbd-inline, which can be ignored if you're not using swkbd-inline. See libnx swkbd.h.
+
+    SwkbdInline kbdinline;
+    rc = swkbdInlineCreate(&kbdinline);
+    printf("swkbdInlineCreate(): 0x%x\n", rc);
+
+    // Set the callbacks.
+    swkbdInlineSetFinishedInitializeCallback(&kbdinline, finishinit_cb);
+    swkbdInlineSetChangedStringCallback(&kbdinline, strchange_cb);
+    swkbdInlineSetMovedCursorCallback(&kbdinline, movedcursor_cb);
+    swkbdInlineSetDecidedEnterCallback(&kbdinline, decidedenter_cb);
+
+    // mode has to be set to this for the applet itself to handle gfx-display.
+    kbdinline.calcArg.initArg.mode = SwkbdInlineMode_AppletDisplay;
+
+    // Launch the applet.
+    if (R_SUCCEEDED(rc)) {
+        rc = swkbdInlineLaunch(&kbdinline);
+        printf("swkbdInlineLaunch(): 0x%x\n", rc);
+    }
+
+    // Optionally set swkbd-inline state, this can also be done after the applet appears. swkbdInlineUpdate() must be called for changes to take affect.
+    //swkbdInlineSetInputText(&kbdinline, "test");
+    //swkbdInlineUpdate(&kbdinline, NULL);
+
+    // Make the applet appear, can be used whenever.
+    SwkbdAppearArg appearArg;
+    swkbdInlineMakeAppearArg(&appearArg, SwkbdType_Normal);
+    // You can optionally set appearArg text / fields here.
+    swkbdInlineAppearArgSetOkButtonText(&appearArg, "Submit");
+    appearArg.dicFlag = 1;
+    appearArg.returnButtonFlag = 1;
+    swkbdInlineAppear(&kbdinline, &appearArg);
+
+    if (R_SUCCEEDED(rc)) {
+        rc = swkbdInlineUpdate(&kbdinline, NULL);
+        printf("swkbdInlineUpdate(): 0x%x\n", rc);
+    }
+
     printf("Press + to exit.\n");
 
     // Main loop
-    while (appletMainLoop())//This loop will automatically exit when applet requests exit.
+    while (appletMainLoop())
     {
         // Scan all the inputs. This should be done once for each frame
         hidScanInput();
@@ -91,9 +150,21 @@ int main(int argc, char* argv[])
 
         // Your code goes here
 
+        if (R_SUCCEEDED(rc)) {
+            if (kDown & KEY_ZR) swkbdInlineDisappear(&kbdinline); //Optional, you can have swkbd (dis)appear whenever.
+            if (kDown & KEY_Y) swkbdInlineAppear(&kbdinline, &appearArg); // If you use swkbdInlineAppear again after text was submitted, you may want to use swkbdInlineSetInputText since the current-text will be the same as when it was submitted otherwise.
+
+            rc = swkbdInlineUpdate(&kbdinline, NULL); // Handles updating SwkbdInline state, this should be called periodically.
+            if (R_FAILED(rc)) printf("swkbdInlineUpdate(): 0x%x\n", rc);
+        }
+
         // Update the console, sending a new frame to the display
         consoleUpdate(NULL);
     }
+
+    // Normally the applet will keep running until swkbdInlineClose is used.
+    rc = swkbdInlineClose(&kbdinline);
+    printf("swkbdInlineClose(): 0x%x\n", rc);
 
     // Deinitialize and clean up resources used by the console (important!)
     consoleExit(NULL);
