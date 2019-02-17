@@ -9,10 +9,6 @@
 
 // See also libnx nfc.h.
 
-// Hardcoded for Super Smash Bros. Ultimate.
-// See also https://switchbrew.org/wiki/NFC_services#Application_IDs.
-#define APP_ID 0x34f80200
-
 // Indefinitely wait for an event to be signaled
 // Break when + is pressed, or if the application should quit (in this case, return value will be non-zero)
 Result eventWaitLoop(Event *event) {
@@ -22,6 +18,7 @@ Result eventWaitLoop(Event *event) {
         hidScanInput();
         if (R_SUCCEEDED(rc) || (hidKeysDown(CONTROLLER_P1_AUTO) & KEY_PLUS))
             break;
+        consoleUpdate(NULL);
     }
     return rc;
 }
@@ -29,12 +26,12 @@ Result eventWaitLoop(Event *event) {
 // Print raw data as hexadecimal numbers.
 void print_hex(void *buf, size_t size) {
     for (size_t i=0; i<size; i++)
-        printf("%02X", ((char *)buf)[i]);
+        printf("%02X", ((u8 *)buf)[i]);
     printf("\n");
     consoleUpdate(NULL);
 }
 
-Result process_amiibo(void) {
+Result process_amiibo(u32 app_id) {
     Result rc = 0;
 
     // Get the handle of the first controller with NFC capabilities.
@@ -61,7 +58,7 @@ Result process_amiibo(void) {
     if (R_SUCCEEDED(rc)) {
         rc = nfpuGetState(&state);
 
-        if (R_SUCCEEDED(rc) && (state == NfpuState_NonInitialized)) {
+        if (R_SUCCEEDED(rc) && state == NfpuState_NonInitialized) {
             printf("Bad nfpu state: %u\n", state);
             consoleUpdate(NULL);
             rc = -1;
@@ -72,7 +69,7 @@ Result process_amiibo(void) {
     if (R_SUCCEEDED(rc)) {
         rc = nfpuGetDeviceState(controller, &device_state);
 
-        if (R_SUCCEEDED(rc) && (device_state > NfpuDeviceState_TagFound)) {
+        if (R_SUCCEEDED(rc) && device_state > NfpuDeviceState_TagFound) {
             printf("Bad nfpu device state: %u\n", device_state);
             consoleUpdate(NULL);
             rc = -1;
@@ -127,12 +124,12 @@ Result process_amiibo(void) {
 
     u32 npad_id = 0;
     if (R_SUCCEEDED(rc)) {
-        rc = nfpuOpenApplicationArea(controller, APP_ID, &npad_id);
+        rc = nfpuOpenApplicationArea(controller, app_id, &npad_id);
 
         if (rc == 0x10073) // 2115-0128
             printf("This tag contains no application data.\n");
         if (rc == 0x13073) // 2115-0152
-            printf("This tag contains application data associated with an ID other than 0x%x.\n", APP_ID);
+            printf("This tag contains application data associated with an ID other than 0x%x.\n", app_id);
     }
 
     u8 app_area[0xd8] = {0}; // Maximum size of the application area.
@@ -172,6 +169,10 @@ fail_0:
 int main(int argc, char* argv[])
 {
     Result rc = 0;
+
+    // Hardcoded for Super Smash Bros. Ultimate.
+    // See also https://switchbrew.org/wiki/NFC_services#Application_IDs.
+    u32 app_id = 0x34f80200;
 
     // This example uses a text console, as a simple way to output text to the screen.
     // If you want to write a software-rendered graphics application,
@@ -224,7 +225,7 @@ int main(int argc, char* argv[])
         // hidKeysDown returns information about which buttons have been
         // just pressed in this frame compared to the previous one
         if (hidKeysDown(CONTROLLER_P1_AUTO) & KEY_A) {
-            rc = process_amiibo();
+            rc = process_amiibo(app_id);
 
             // If an error happened, print it.
             if (R_FAILED(rc))
