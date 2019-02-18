@@ -26,7 +26,7 @@ Result eventWaitLoop(Event *event) {
 // Print raw data as hexadecimal numbers.
 void print_hex(void *buf, size_t size) {
     for (size_t i=0; i<size; i++)
-        printf("%02X", ((u8 *)buf)[i]);
+        printf("%02X", ((u8*)buf)[i]);
     printf("\n");
     consoleUpdate(NULL);
 }
@@ -171,7 +171,7 @@ int main(int argc, char* argv[])
     Result rc = 0;
 
     // Hardcoded for Super Smash Bros. Ultimate.
-    // See also https://switchbrew.org/wiki/NFC_services#Application_IDs.
+    // See also: https://switchbrew.org/wiki/NFC_services#Application_IDs
     u32 app_id = 0x34f80200;
 
     // This example uses a text console, as a simple way to output text to the screen.
