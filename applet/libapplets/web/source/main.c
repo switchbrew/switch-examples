@@ -9,7 +9,7 @@
 
 // See also libnx web.h.
 
-// This example shows how to use the WebWifiAuth LibraryApplet.
+// This example shows how to use the web LibraryApplets.
 
 // Main program entrypoint
 int main(int argc, char* argv[])
@@ -23,11 +23,11 @@ int main(int argc, char* argv[])
     //   take a look at the graphics/opengl set of examples, which uses EGL instead.
     consoleInit(NULL);
 
-    printf("webWifi example\n");
+    printf("web example\n");
 
     consoleUpdate(NULL);
 
-    printf("Press A to launch WebWifiAuth applet.\n");
+    printf("Press A to launch Web applet.\n");
     printf("Press + to exit.\n");
 
     // Main loop
@@ -44,17 +44,35 @@ int main(int argc, char* argv[])
             break; // break in order to return to hbmenu
 
         if (kDown & KEY_A) {
-            WebWifiConfig config;
+            WebCommonConfig config;
+            WebCommonReply reply;
+            WebExitReason exitReason=0;
 
-            // Set the initial URL that the applet will navigate too.
-            webWifiCreate(&config, "http://example.org/");
+            // Create the config. There's a number of web*Create() funcs, see libnx web.h.
+            // webPageCreate/webNewsCreate requires running under a host title which has HtmlDocument content, when the title is an Application. When the title is an Application when using webPageCreate/webNewsCreate, and webConfigSetWhitelist is not used, the whitelist will be loaded from the content.
+            rc = webPageCreate(&config, "https://google.com/");
+            printf("webPageCreate(): 0x%x\n", rc);
 
-            printf("Running webWifiShow...\n");
-            rc = webWifiShow(&config);
-            printf("webWifiShow(): 0x%x\n", rc);
+            if (R_SUCCEEDED(rc)) {
+                // At this point you can use any webConfigSet* funcs you want.
+
+                rc = webConfigSetWhitelist(&config, "^http*"); // Set the whitelist, adjust as needed. If you're only using a single domain, you could remove this and use webNewsCreate for the above (see web.h for webNewsCreate).
+                printf("webConfigSetWhitelist(): 0x%x\n", rc);
+
+                if (R_SUCCEEDED(rc)) { // Launch the applet and wait for it to exit.
+                    printf("Running webConfigShow...\n");
+                    rc = webConfigShow(&config, &reply); // If you don't use reply you can pass NULL for it.
+                    printf("webConfigShow(): 0x%x\n", rc);
+                }
+
+                if (R_SUCCEEDED(rc)) { // Normally you can ignore exitReason.
+                    rc = webReplyGetExitReason(&reply, &exitReason);
+                    printf("webReplyGetExitReason(): 0x%x", rc);
+                    if (R_SUCCEEDED(rc)) printf(", 0x%x", exitReason);
+                    printf("\n");
+                }
+            }
         }
-
-        // Your code goes here
 
         // Update the console, sending a new frame to the display
         consoleUpdate(NULL);
