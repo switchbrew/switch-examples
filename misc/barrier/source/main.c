@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdarg.h>
+#include <inttypes.h>
 #include <switch.h>
 
 static Mutex g_PrintMutex;
@@ -19,14 +20,14 @@ static void locked_printf(const char* fmt, ...)
 
 void threadFunc(void* arg)
 {
-    int num = (int) arg;
+    u64 num = (u64) arg;
 
-    int i;
+    u64 i;
     for (i=0; i<2; i++)
     {
-        locked_printf("Entering barrier %d\n", num);
+        locked_printf("Entering barrier %" PRIu64 "\n", num);
         barrierWait(&g_Barrier);
-        locked_printf("Leaving barrier %d\n", num);
+        locked_printf("Leaving barrier %" PRIu64 "\n", num);
     }
 }
 
@@ -43,13 +44,14 @@ int main(int argc, char **argv)
     int num_threads;
     Result rc;
 
-    int i;
+    u64 i;
     for (i=0; i<4; i++) {
         num_threads = i;
         rc = threadCreate(&thread[i], threadFunc, (void*)i, 0x10000, 0x2C, -2);
         if (R_FAILED(rc))
             goto clean_up;
     }
+    num_threads = i+1;
 
     for (i=0; i<4; i++) {
         rc = threadStart(&thread[i]);
