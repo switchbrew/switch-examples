@@ -8,7 +8,7 @@
 #include <switch.h>
 
 // This example shows how to use USB devices via usbhs, see also libnx usbhs.h/usb.h.
-// Only devices which are not used by sysmodules are usable, hence HID devices are not usable with this for example.
+// Only devices which are not used by sysmodules are usable. With the below filter, this will only detect USB mass storage devices.
 
 // Main program entrypoint
 int main(int argc, char* argv[])
@@ -38,7 +38,9 @@ int main(int argc, char* argv[])
     memset(&inf_session, 0, sizeof(inf_session));
     memset(&ep_session, 0, sizeof(ep_session));
 
-    //Leave filter at all-zero to disable filtering. If you want to use filtering, see libnx usbhs.h.
+    //See libnx usbhs.h regarding filtering. Flags has to be set, since [7.0.0+] doesn't allow using a filter struct which matches an existing one.
+    filter.Flags = UsbHsInterfaceFilterFlags_bInterfaceClass;
+    filter.bInterfaceClass = USB_CLASS_MASS_STORAGE;
 
     rc = usbHsInitialize();
     if (R_FAILED(rc)) printf("usbHsInitialize() failed: 0x%x\n", rc);
