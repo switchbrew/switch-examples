@@ -45,9 +45,8 @@ int main(int argc, char* argv[])
         if (kDown & KEY_PLUS)
             break; // break in order to return to hbmenu
 
-        if (kDown & KEY_A){
+        if (kDown & KEY_A)
 	    Mix_PlayMusic(audio, 1); //Play the audio file
-	    }
 		
         // Update the console, sending a new frame to the display
         consoleUpdate(NULL);
