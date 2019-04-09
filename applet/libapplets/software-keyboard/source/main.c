@@ -77,12 +77,12 @@ int main(int argc, char* argv[])
         //swkbdConfigSetSubText(&kbd, "Sub");
         //swkbdConfigSetGuideText(&kbd, "Guide");
 
-        swkbdConfigSetTextCheckCallback(&kbd, validate_text);//Optional, enable to use TextCheck.
+        swkbdConfigSetTextCheckCallback(&kbd, validate_text);//Optional, can be removed if not using TextCheck.
 
         // Set the initial string if you want.
         //swkbdConfigSetInitialText(&kbd, "Initial");
 
-        // You can set arg fields directly if you want.
+        // You can also use swkbdConfigSet*() funcs if you want.
 
         printf("Running swkbdShow...\n");
         rc = swkbdShow(&kbd, tmpoutstr, sizeof(tmpoutstr));
