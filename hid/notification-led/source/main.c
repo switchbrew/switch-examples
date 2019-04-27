@@ -34,8 +34,9 @@ int main(int argc, char* argv[])
     }
     else {
         initflag = 1;
-        printf("Press A to set the notification-LED pattern.\n");
-        printf("Press + to exit.\n");
+        printf("Press A to set a Breathing effect notification-LED pattern.\n");
+        printf("Press B to set a Heartbeat effect notification-LED pattern.\n");
+        printf("Press + to disable notification-LED and exit.\n");
     }
 
     // Main loop
