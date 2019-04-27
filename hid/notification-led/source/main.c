@@ -28,11 +28,10 @@ int main(int argc, char* argv[])
     memset(&pattern, 0, sizeof(pattern));
 
     // Setup the pattern data.
-    // TODO: Update this once libnx has the struct filled in.
-    pattern.unk_x0[0] = 0xf;
-    pattern.unk_x0[1] = 0xf;
-    pattern.unk_x0[2] = 0xf;
-    pattern.unk_x0[3] = 0xf;
+    pattern.globalMiniCycleDuration = 0xf;
+    pattern.totalMiniCycles = 0xf;
+    pattern.totalFullCycles = 0xf;
+    pattern.startIntensity = 0xf;
 
     printf("notification-led example\n");
 
