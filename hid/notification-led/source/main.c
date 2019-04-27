@@ -57,7 +57,7 @@ int main(int argc, char* argv[])
             memset(&pattern, 0, sizeof(pattern));
 
             // Setup Breathing effect pattern data.
-            pattern.baseMiniCycleDuration = 0x8;           // 100ms.
+            pattern.baseMiniCycleDuration = 0x8;             // 100ms.
             pattern.totalMiniCycles = 0x2;                   // 3 mini cycles. Last one 12.5ms.
             pattern.totalFullCycles = 0x0;                   // Repeat forever.
             pattern.startIntensity = 0x2;                    // 13%.
@@ -73,7 +73,7 @@ int main(int argc, char* argv[])
             memset(&pattern, 0, sizeof(pattern));
 
             // Setup Heartbeat effect pattern data.
-            pattern.baseMiniCycleDuration = 0x1;           // 12.5ms.
+            pattern.baseMiniCycleDuration = 0x1;             // 12.5ms.
             pattern.totalMiniCycles = 0xF;                   // 16 mini cycles.
             pattern.totalFullCycles = 0x0;                   // Repeat forever.
             pattern.startIntensity = 0x0;                    // 0%.
