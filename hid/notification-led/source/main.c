@@ -25,14 +25,6 @@ int main(int argc, char* argv[])
     u64 UniquePadIds[2];
     HidsysNotificationLedPattern pattern;
 
-    memset(&pattern, 0, sizeof(pattern));
-
-    // Setup the pattern data.
-    pattern.globalMiniCycleDuration = 0xf;
-    pattern.totalMiniCycles = 0xf;
-    pattern.totalFullCycles = 0xf;
-    pattern.startIntensity = 0xf;
-
     printf("notification-led example\n");
 
     rc = hidsysInitialize();
@@ -56,10 +48,61 @@ int main(int argc, char* argv[])
         // just pressed in this frame compared to the previous one
         u64 kDown = hidKeysDown(CONTROLLER_P1_AUTO);
 
-        if (kDown & KEY_PLUS)
-            break; // break in order to return to hbmenu
+        if (kDown & KEY_PLUS) {
+            // Disable notification led.
+            memset(&pattern, 0, sizeof(pattern));
+        }
+        else if (kDown & KEY_A) {
+            memset(&pattern, 0, sizeof(pattern));
 
-        if (kDown & KEY_A) {
+            // Setup Breathing effect pattern data.
+            pattern.globalMiniCycleDuration = 0x8;           // 100ms.
+            pattern.totalMiniCycles = 0x2;                   // 3 mini cycles. Last one 12.5ms.
+            pattern.totalFullCycles = 0x0;                   // Repeat forever.
+            pattern.startIntensity = 0x2;                    // 13%.
+
+            pattern.miniCycles[0].ledIntensity = 0xF;        // 100%.
+            pattern.miniCycles[0].transitionSteps = 0xF;     // 15 steps. Transition time 1.5s.
+            pattern.miniCycles[0].finalStepDuration = 0x0;   // Forced 12.5ms.
+            pattern.miniCycles[1].ledIntensity = 0x2;        // 13%.
+            pattern.miniCycles[1].transitionSteps = 0xF;     // 15 steps. Transition time 1.5s.
+            pattern.miniCycles[1].finalStepDuration = 0x0;   // Forced 12.5ms. 
+        }
+        else if (kDown & KEY_B) {
+            memset(&pattern, 0, sizeof(pattern));
+
+            // Setup Heartbeat effect pattern data.
+            pattern.globalMiniCycleDuration = 0x1;           // 12.5ms.
+            pattern.totalMiniCycles = 0xF;                   // 16 mini cycles.
+            pattern.totalFullCycles = 0x0;                   // Repeat forever.
+            pattern.startIntensity = 0x0;                    // 0%.
+
+            // First beat.
+            pattern.miniCycles[0].ledIntensity = 0xF;        // 100%.
+            pattern.miniCycles[0].transitionSteps = 0xF;     // 15 steps. Total 187.5ms.
+            pattern.miniCycles[0].finalStepDuration = 0x0;   // Forced 12.5ms.
+            pattern.miniCycles[1].ledIntensity = 0x0;        // 0%.
+            pattern.miniCycles[1].transitionSteps = 0xF;     // 15 steps. Total 187.5ms.
+            pattern.miniCycles[1].finalStepDuration = 0x0;   // Forced 12.5ms.
+
+            // Second beat.
+            pattern.miniCycles[2].ledIntensity = 0xF;
+            pattern.miniCycles[2].transitionSteps = 0xF;
+            pattern.miniCycles[2].finalStepDuration = 0x0;
+            pattern.miniCycles[3].ledIntensity = 0x0;
+            pattern.miniCycles[3].transitionSteps = 0xF;
+            pattern.miniCycles[3].finalStepDuration = 0x0;
+
+            // Led off wait time.
+            for(i=2; i<15; i++)
+            {
+                pattern.miniCycles[i].ledIntensity = 0x0;        // 0%.
+                pattern.miniCycles[i].transitionSteps = 0xF;     // 15 steps. Total 187.5ms.
+                pattern.miniCycles[i].finalStepDuration = 0xF;   // 187.5ms.
+            }
+        }
+
+        if (kDown & (KEY_A | KEY_B | KEY_PLUS)) {
             total_entries = 0;
             memset(UniquePadIds, 0, sizeof(UniquePadIds));
 
@@ -81,6 +124,9 @@ int main(int argc, char* argv[])
 
         // Update the console, sending a new frame to the display
         consoleUpdate(NULL);
+
+        if (kDown & KEY_PLUS)
+            break; // break in order to return to hbmenu
     }
 
     if (initflag) hidsysExit();
