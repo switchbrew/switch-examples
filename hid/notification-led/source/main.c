@@ -95,8 +95,7 @@ int main(int argc, char* argv[])
             pattern.miniCycles[3].finalStepDuration = 0x0;
 
             // Led off wait time.
-            for(i=2; i<15; i++)
-            {
+            for(i=2; i<15; i++) {
                 pattern.miniCycles[i].ledIntensity = 0x0;        // 0%.
                 pattern.miniCycles[i].transitionSteps = 0xF;     // 15 steps. Total 187.5ms.
                 pattern.miniCycles[i].finalStepDuration = 0xF;   // 187.5ms.
