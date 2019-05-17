@@ -17,7 +17,13 @@ int main(int argc, char* argv[])
 	
     consoleInit(NULL);
 
-    printf("Press A button to play the sound!\n");
+
+    Result rc = romfsInit();
+    if (R_FAILED(rc))
+    	printf("romfsInit: %08X\n", rc);
+	
+	else
+		printf("Press A button to play the sound!\n");
 
     // Start SDL with audio support
     SDL_Init(SDL_INIT_AUDIO);
@@ -30,7 +36,8 @@ int main(int argc, char* argv[])
     Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, MIX_DEFAULT_CHANNELS, 4096);
 	
     // Load sound file to use
-    Mix_Music *audio = Mix_LoadMUS("test.mp3");
+	//Sound from https://freesound.org/people/jens.enk/sounds/434610/
+    Mix_Music *audio = Mix_LoadMUS("romfs:/test.mp3");
 	 
     // Main loop
     while (appletMainLoop())
