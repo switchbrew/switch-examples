@@ -26,6 +26,10 @@ void finishinit_cb(void) {
     printf("reply: FinishedInitialize\n");
 }
 
+void decidedcancel_cb(void) {
+    printf("reply: DecidedCancel\n");
+}
+
 // String changed callback.
 void strchange_cb(const char* str, SwkbdChangedStringArg* arg) {
     printf("reply: ChangedString. str = %s, arg->stringLen = 0x%x, arg->dicStartCursorPos = 0x%x, arg->dicEndCursorPos = 0x%x, arg->arg->cursorPos = 0x%x\n", str, arg->stringLen, arg->dicStartCursorPos, arg->dicEndCursorPos, arg->cursorPos);
@@ -100,20 +104,19 @@ int main(int argc, char* argv[])
     rc = swkbdInlineCreate(&kbdinline);
     printf("swkbdInlineCreate(): 0x%x\n", rc);
 
-    // Set the callbacks.
     swkbdInlineSetFinishedInitializeCallback(&kbdinline, finishinit_cb);
-    swkbdInlineSetChangedStringCallback(&kbdinline, strchange_cb);
-    swkbdInlineSetMovedCursorCallback(&kbdinline, movedcursor_cb);
-    swkbdInlineSetDecidedEnterCallback(&kbdinline, decidedenter_cb);
-
-    // mode has to be set to this for the applet itself to handle gfx-display.
-    kbdinline.calcArg.initArg.mode = SwkbdInlineMode_AppletDisplay;
 
     // Launch the applet.
     if (R_SUCCEEDED(rc)) {
-        rc = swkbdInlineLaunch(&kbdinline);
+        rc = swkbdInlineLaunchForLibraryApplet(&kbdinline, SwkbdInlineMode_AppletDisplay, 0);
         printf("swkbdInlineLaunch(): 0x%x\n", rc);
     }
+
+    // Set the callbacks.
+    swkbdInlineSetChangedStringCallback(&kbdinline, strchange_cb);
+    swkbdInlineSetMovedCursorCallback(&kbdinline, movedcursor_cb);
+    swkbdInlineSetDecidedEnterCallback(&kbdinline, decidedenter_cb);
+    swkbdInlineSetDecidedCancelCallback(&kbdinline, decidedcancel_cb);
 
     // Optionally set swkbd-inline state, this can also be done after the applet appears. swkbdInlineUpdate() must be called for changes to take affect.
     //swkbdInlineSetInputText(&kbdinline, "test");
