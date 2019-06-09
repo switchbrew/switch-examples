@@ -55,6 +55,7 @@ int main(int argc, char* argv[])
     device.singleColorButtons = RGBA8_MAXALPHA(0,0,0);
 
     // Setup example controller state.
+    state.batteryCharge = 4; // Set battery charge to full.
     state.buttons = KEY_A | KEY_ZR;
     state.joysticks[JOYSTICK_LEFT].dx = 0x1234;
     state.joysticks[JOYSTICK_LEFT].dy = -0x1234;
@@ -85,6 +86,7 @@ int main(int argc, char* argv[])
         // just pressed in this frame compared to the previous one
         u64 kDown = hidKeysDown(conID);
 
+        // Set state for the controller. You can also use hiddbgApplyHdlsStateList for this.
         if (R_SUCCEEDED(rc)) {
             rc2 = hiddbgSetHdlsState(HdlsHandle, &state);
             if (R_FAILED(rc2)) printf("hiddbgSetHdlsState(): 0x%x\n", rc2);
