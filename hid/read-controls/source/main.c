@@ -15,8 +15,8 @@ int main(int argc, char **argv)
         "KEY_DLEFT", "KEY_DUP", "KEY_DRIGHT", "KEY_DDOWN",
         "KEY_LSTICK_LEFT", "KEY_LSTICK_UP", "KEY_LSTICK_RIGHT", "KEY_LSTICK_DOWN",
         "KEY_RSTICK_LEFT", "KEY_RSTICK_UP", "KEY_RSTICK_RIGHT", "KEY_RSTICK_DOWN",
-        "KEY_SL", "KEY_SR", "KEY_TOUCH", "",
-        "", "", "", ""
+        "KEY_SL_LEFT", "KEY_SR_LEFT", "KEY_SL_RIGHT", "KEY_SR_RIGHT",
+        "KEY_TOUCH", "", "", ""
     };
 
     consoleInit(NULL);
