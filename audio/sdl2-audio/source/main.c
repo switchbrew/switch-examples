@@ -64,9 +64,8 @@ int main(int argc, char *argv[])
     // Shuts down SDL subsystems
     SDL_Quit();
 
-    romfsExit();
-
     // Deinitialize and clean up resources used by the console (important!)
+    romfsExit();
     consoleExit(NULL);
     return 0;
 }
