@@ -48,8 +48,8 @@ int main(int argc, char* argv[])
     HiddbgHdlsDeviceInfo device = {0};
     HiddbgHdlsState state={0};
 
-    // Set the controller type.
-    device.type = TYPE_PROCONTROLLER;
+    // Set the controller type to Pro-Controller.
+    device.type = BIT(0);
     // Set the controller colors.
     device.singleColorBody = RGBA8_MAXALPHA(255,255,255);
     device.singleColorButtons = RGBA8_MAXALPHA(0,0,0);
