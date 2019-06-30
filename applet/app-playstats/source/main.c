@@ -21,25 +21,13 @@ int main(int argc, char* argv[])
     printf("applet application play-stats example\n");
 
     Result rc=0;
-    PdmApplicationPlayStatistics stats[1] = {0};
+    PdmApplicationPlayStatistics stats[1];
     u64 titleIDs[1] = {0x010021B002EEA000}; // Change this to the titleID of the current-process / the titleID you want to use.
-    s32 total_out=0;
+    s32 total_out;
     s32 i;
-    s32 i2;
 
-    // Use appletQueryApplicationPlayStatisticsByUid if you want playstats for a specific userID.
-
-    rc = appletQueryApplicationPlayStatistics(stats, titleIDs, sizeof(titleIDs)/sizeof(u64), &total_out);
-    printf("appletQueryApplicationPlayStatisticsByUid(): 0x%x\n", rc);
-    if (R_SUCCEEDED(rc)) {
-        printf("total_out: %d\n", total_out);
-        for (i=0; i<total_out; i++) {
-            printf("%d: ", i);
-            printf("titleID = 0x%08lX ", stats[i].titleID);
-            for (i2=0; i2<sizeof(stats[i].unk_x8); i2++) printf("%02X ", stats[i].unk_x8[i2]);
-            printf("\n");
-        }
-    }
+    printf("Press A to get playstats.\n");
+    printf("Press + to exit.\n");
 
     // Main loop
     while (appletMainLoop())//This loop will automatically exit when applet requests exit.
@@ -54,7 +42,22 @@ int main(int argc, char* argv[])
         if (kDown & KEY_PLUS)
             break; // break in order to return to hbmenu
 
-        // Your code goes here
+        if (kDown & KEY_A) {
+            // Use appletQueryApplicationPlayStatisticsByUid if you want playstats for a specific userID.
+
+            memset(stats, 0, sizeof(stats));
+            total_out = 0;
+
+            rc = appletQueryApplicationPlayStatistics(stats, titleIDs, sizeof(titleIDs)/sizeof(u64), &total_out);
+            printf("appletQueryApplicationPlayStatistics(): 0x%x\n", rc);
+            if (R_SUCCEEDED(rc)) {
+                printf("total_out: %d\n", total_out);
+                for (i=0; i<total_out; i++) {
+                    printf("%d: ", i);
+                    printf("titleID = 0x%08lX, totalPlayTime = %lu (%llu seconds), totalLaunches = %lu\n", stats[i].titleID, stats[i].totalPlayTime, stats[i].totalPlayTime / 1000000000ULL, stats[i].totalLaunches);
+                }
+            }
+        }
 
         // Update the console, sending a new frame to the display
         consoleUpdate(NULL);
