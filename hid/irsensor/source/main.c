@@ -5,8 +5,7 @@
 
 #include <switch.h>
 
-//Joy-con IR-sensor example, displays the image from the IR camera.
-//The Joy-con must be detached from the system.
+// Joy-Con IR-sensor example, displays the image from the IR camera. See also libnx irs.h.
 
 // Define the desired framebuffer resolution (here we set it to 720p).
 #define FB_WIDTH  1280
@@ -64,9 +63,10 @@ int main(int argc, char **argv)
     if (R_FAILED(rc))
         return error_screen("irsActivateIrsensor() returned 0x%x\n", rc);
 
-    //If you want to use handheld-mode/non-CONTROLLER_PLAYER_* for irsensor you have to set irhandle directly, for example: irhandle = CONTROLLER_HANDHELD;
+    // Get the handle for the specified controller.
     u32 irhandle=0;
-    rc = irsGetIrCameraHandle(&irhandle, CONTROLLER_PLAYER_1);
+    hidScanInput();
+    rc = irsGetIrCameraHandle(&irhandle, hidGetHandheldMode() ? CONTROLLER_HANDHELD : CONTROLLER_PLAYER_1);
     if (R_FAILED(rc))
         return error_screen("irsGetIrCameraHandle() returned 0x%x\n", rc);
 
