@@ -24,7 +24,7 @@ Result get_save(u64 *titleID, u128 *userID)
         rc = fsSaveDataIteratorRead(&iterator, &info, 1, &total_entries);//See libnx fs.h.
         if (R_FAILED(rc) || total_entries==0) break;
 
-        if (info.SaveDataType == FsSaveDataType_SaveData) {//Filter by FsSaveDataType_SaveData, however note that NandUser can have non-FsSaveDataType_SaveData.
+        if (info.saveDataType == FsSaveDataType_SaveData) {//Filter by FsSaveDataType_SaveData, however note that NandUser can have non-FsSaveDataType_SaveData.
             *titleID = info.titleID;
             *userID = info.userID;
             return 0;
