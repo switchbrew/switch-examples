@@ -2,11 +2,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 // Include the main libnx system header, for Switch development
 #include <switch.h>
 
 // This example shows how to use applet to get playstats for applications. See also libnx applet.h. See applet.h for the requirements for using this.
+// This also shows how to use pdmqry, see also libnx pdm.h.
 
 /// Main program entrypoint
 int main(int argc, char* argv[])
@@ -18,15 +20,23 @@ int main(int argc, char* argv[])
     //   take a look at the graphics/opengl set of examples, which uses EGL instead.
     consoleInit(NULL);
 
-    printf("applet application play-stats example\n");
+    printf("application play-stats example\n");
 
     Result rc=0;
     PdmApplicationPlayStatistics stats[1];
+    PdmApplicationEvent events[1];
     u64 titleIDs[1] = {0x010021B002EEA000}; // Change this to the titleID of the current-process / the titleID you want to use.
     s32 total_out;
     s32 i;
+    bool initflag=0;
+
+    // Not needed if you just want to use the applet cmds.
+    rc = pdmqryInitialize();
+    if (R_FAILED(rc)) printf("pdmqryInitialize(): 0x%x\n", rc);
+    if (R_SUCCEEDED(rc)) initflag = true;
 
     printf("Press A to get playstats.\n");
+    if (initflag) printf("Press X to use pdmqry.\n");
     printf("Press + to exit.\n");
 
     // Main loop
@@ -59,9 +69,30 @@ int main(int argc, char* argv[])
             }
         }
 
+        if (initflag && (kDown & KEY_X)) {
+            memset(events, 0, sizeof(events));
+            total_out = 0;
+
+            rc = pdmqryQueryApplicationEvent(0, events, sizeof(events)/sizeof(PdmApplicationEvent), &total_out);
+            printf("pdmqryQueryApplicationEvent(): 0x%x\n", rc);
+            if (R_SUCCEEDED(rc)) {
+                printf("total_out: %d\n", total_out);
+                for (i=0; i<total_out; i++) {
+                    time_t tmptime = pdmPlayTimestampToPosix(events[i].timestampUser);
+
+                    printf("%d: ", i);
+                    printf("titleID = 0x%08lX, entryindex = 0x%x, timestampUser = %u, timestampNetwork = %u, eventType = %u, timestampUser = %s\n", events[i].titleID, events[i].entryindex, events[i].timestampUser, events[i].timestampNetwork, events[i].eventType, ctime(&tmptime));
+                }
+            }
+
+            // For more pdmqry cmds see pdm.h.
+        }
+
         // Update the console, sending a new frame to the display
         consoleUpdate(NULL);
     }
+
+    if (initflag) pdmqryExit();
 
     // Deinitialize and clean up resources used by the console (important!)
     consoleExit(NULL);
