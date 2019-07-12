@@ -40,7 +40,7 @@ int main(int argc, char* argv[])
     printf("Press + to exit.\n");
 
     // Main loop
-    while (appletMainLoop())//This loop will automatically exit when applet requests exit.
+    while (appletMainLoop())
     {
         // Scan all the inputs. This should be done once for each frame
         hidScanInput();
