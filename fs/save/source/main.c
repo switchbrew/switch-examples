@@ -48,14 +48,13 @@ int main(int argc, char **argv)
 
     FsFileSystem tmpfs;
     u128 userID=0;
-    bool account_selected=0;
     u64 titleID=0x01007ef00011e000;//titleID of the save to mount, in this case BOTW.
 
     consoleInit(NULL);
 
     //Get the userID for save mounting. To mount common savedata, use FS_SAVEDATA_USERID_COMMONSAVE.
 
-    //Try to find savedata to use with get_save() first, otherwise fallback to the above hard-coded TID + the userID from accountGetActiveUser(). Note that you can use either method.
+    //Try to find savedata to use with get_save() first, otherwise fallback to the above hard-coded TID + the userID from accountGetPreselectedUser(). Note that you can use either method.
     //See the account example for getting account info for an userID.
     //See also the app_controldata example for getting info for a titleID.
     if (R_FAILED(get_save(&titleID, &userID))) {
@@ -65,15 +64,11 @@ int main(int argc, char **argv)
         }
 
         if (R_SUCCEEDED(rc)) {
-            rc = accountGetActiveUser(&userID, &account_selected);
+            rc = accountGetPreselectedUser(&userID);
             accountExit();
 
             if (R_FAILED(rc)) {
-                printf("accountGetActiveUser() failed: 0x%x\n", rc);
-            }
-            else if(!account_selected) {
-                printf("No user is currently selected.\n");
-                rc = -1;
+                printf("accountGetPreselectedUser() failed: 0x%x\n", rc);
             }
         }
     }

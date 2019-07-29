@@ -3,14 +3,13 @@
 
 #include <switch.h>
 
-//This example shows how to get info for the current user account. See libnx acc.h.
+//This example shows how to get info for the preselected user account. See libnx acc.h.
 
 int main(int argc, char **argv)
 {
     Result rc=0;
 
     u128 userID=0;
-    bool account_selected=0;
     AccountProfile profile;
     AccountUserData userdata;
     AccountProfileBase profilebase;
@@ -28,14 +27,10 @@ int main(int argc, char **argv)
     }
 
     if (R_SUCCEEDED(rc)) {
-        rc = accountGetActiveUser(&userID, &account_selected);
+        rc = accountGetPreselectedUser(&userID);
 
         if (R_FAILED(rc)) {
-            printf("accountGetActiveUser() failed: 0x%x\n", rc);
-        }
-        else if(!account_selected) {
-            printf("No user is currently selected.\n");
-            rc = -1;
+            printf("accountGetPreselectedUser() failed: 0x%x\n", rc);
         }
 
         if (R_SUCCEEDED(rc)) {
