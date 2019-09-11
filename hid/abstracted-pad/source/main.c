@@ -7,7 +7,7 @@
 #include <switch.h>
 
 // This example shows how to use AbstractedPad, see also libnx hiddbg.h. Depending on state type2, either a new virtual controller can be registered, or the state can be merged with an existing controller.
-// Note that Hdls can also be used for this, which generally you would want to use that instead.
+// This is deprecated, use Hdls instead when running on compatible system-versions.
 
 // Main program entrypoint
 int main(int argc, char* argv[])
