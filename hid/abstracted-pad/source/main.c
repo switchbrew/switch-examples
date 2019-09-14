@@ -6,7 +6,7 @@
 // Include the main libnx system header, for Switch development
 #include <switch.h>
 
-// This example shows how to use AbstractedPad, see also libnx hiddbg.h. Depending on state type2, either a new virtual controller can be registered, or the state can be merged with an existing controller.
+// This example shows how to use AbstractedPad, see also libnx hiddbg.h. Depending on state npadInterfaceType, either a new virtual controller can be registered, or the state can be merged with an existing controller.
 // This is deprecated, use Hdls instead when running on compatible system-versions.
 
 // Main program entrypoint
@@ -27,7 +27,7 @@ int main(int argc, char* argv[])
 
     hidScanInput();
 
-    // When hiddbgSetAutoPilotVirtualPadState runs a new controller may become available, depending on the specified type2 field. If CONTROLLER_HANDHELD is being internally, CONTROLLER_P1_AUTO would use the new controller. Check which controller we're currently using and don't use CONTROLLER_P1_AUTO, so it doesn't switch to using the new controller later.
+    // When hiddbgSetAutoPilotVirtualPadState runs a new controller may become available, depending on the specified npadInterfaceType field. If CONTROLLER_HANDHELD is being internally, CONTROLLER_P1_AUTO would use the new controller. Check which controller we're currently using and don't use CONTROLLER_P1_AUTO, so it doesn't switch to using the new controller later.
     HidControllerID conID = hidGetHandheldMode() ? CONTROLLER_HANDHELD : CONTROLLER_PLAYER_1;
 
     printf("Connected controllers: ");
@@ -86,7 +86,7 @@ int main(int argc, char* argv[])
             if (R_SUCCEEDED(rc) && tmpout>=1) {
                 for (u32 i=0; i<tmpout; i++) {
                     printf("0x%x: \n", i);
-                    printf("type = 0x%x, flags = 0x%x, colors = 0x%x 0x%x, type2 = 0x%x, buttons = 0x%x, stickL.dx = 0x%x, stickL.dy = 0x%x, stickR.dx = 0x%x, stickR.dy = 0x%x\n", states[i].type, states[i].flags, states[i].singleColorBody, states[i].singleColorButtons, states[i].type2, states[i].state.buttons, states[i].state.joysticks[0].dx, states[i].state.joysticks[0].dy, states[i].state.joysticks[1].dx, states[i].state.joysticks[1].dy);
+                    printf("type = 0x%x, flags = 0x%x, colors = 0x%x 0x%x, npadInterfaceType = 0x%x, buttons = 0x%x, stickL.dx = 0x%x, stickL.dy = 0x%x, stickR.dx = 0x%x, stickR.dy = 0x%x\n", states[i].type, states[i].flags, states[i].singleColorBody, states[i].singleColorButtons, states[i].npadInterfaceType, states[i].state.buttons, states[i].state.joysticks[0].dx, states[i].state.joysticks[0].dy, states[i].state.joysticks[1].dx, states[i].state.joysticks[1].dy);
                 }
             }
 
@@ -98,8 +98,8 @@ int main(int argc, char* argv[])
                 // Set type to one that's usable with state-merge. Note that this is also available with Hdls.
                 states[0].type = BIT(1);
                 // Use state-merge for the above controller, the state will be merged with an existing controller.
-                // For a plain virtual controller, use type2 value 0x0, and update the above type value.
-                states[0].type2 = 0x2;
+                // For a plain virtual controller, use NpadInterfaceType_Bluetooth, and update the above type value.
+                states[0].npadInterfaceType = NpadInterfaceType_Rail;
 
                 states[0].state.buttons |= KEY_ZL;
 
