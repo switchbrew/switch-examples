@@ -81,7 +81,7 @@ int main(int argc, char* argv[])
             else if (kDown & KEY_X) {
                 bool flag=0;
                 rc = appletIsVrModeEnabled(&flag);
-                printf("appletIsVrModeEnabled(): 0x%x\n", rc);
+                printf("appletIsVrModeEnabled(): 0x%x", rc);
                 if (R_SUCCEEDED(rc)) printf(", %d\n", flag);
                 printf("\n");
             }
