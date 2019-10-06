@@ -8,7 +8,7 @@
 int main(int argc, char **argv)
 {
     u64 LanguageCode=0;
-    s32 Language=0;
+    SetLanguage Language=SetLanguage_ENUS;
 
     consoleInit(NULL);
 
