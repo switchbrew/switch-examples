@@ -6,7 +6,7 @@
 
 //This example shows how to access savedata for (official) applications/games.
 
-Result get_save(u64 *titleID, u128 *userID)
+Result get_save(u64 *titleID, AccountUid *userID)
 {
     Result rc=0;
     FsSaveDataIterator iterator;
@@ -47,12 +47,12 @@ int main(int argc, char **argv)
     struct dirent* ent;
 
     FsFileSystem tmpfs;
-    u128 userID=0;
+    AccountUid userID={0};
     u64 titleID=0x01007ef00011e000;//titleID of the save to mount, in this case BOTW.
 
     consoleInit(NULL);
 
-    //Get the userID for save mounting. To mount common savedata, use FS_SAVEDATA_USERID_COMMONSAVE.
+    //Get the userID for save mounting. To mount common savedata, use an all-zero userID.
 
     //Try to find savedata to use with get_save() first, otherwise fallback to the above hard-coded TID + the userID from accountGetPreselectedUser(). Note that you can use either method.
     //See the account example for getting account info for an userID.
@@ -74,11 +74,11 @@ int main(int argc, char **argv)
     }
 
     if (R_SUCCEEDED(rc)) {
-        printf("Using titleID=0x%016lx userID: 0x%lx 0x%lx\n", titleID, (u64)(userID>>64), (u64)userID);
+        printf("Using titleID=0x%016lx userID: 0x%lx 0x%lx\n", titleID, userID.uid[1], userID.uid[0]);
     }
 
     if (R_SUCCEEDED(rc)) {
-        rc = fsMount_SaveData(&tmpfs, titleID, userID);//See also libnx fs.h.
+        rc = fsMount_SaveData(&tmpfs, titleID, &userID);//See also libnx fs.h.
         if (R_FAILED(rc)) {
             printf("fsMount_SaveData() failed: 0x%x\n", rc);
         }
