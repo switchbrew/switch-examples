@@ -9,12 +9,12 @@ int main(int argc, char **argv)
 {
     Result rc=0;
 
-    u128 userID=0;
+    AccountUid userID={0};
     AccountProfile profile;
     AccountUserData userdata;
     AccountProfileBase profilebase;
 
-    char username[0x21];
+    char nickname[0x21];
 
     consoleInit(NULL);
 
@@ -34,9 +34,9 @@ int main(int argc, char **argv)
         }
 
         if (R_SUCCEEDED(rc)) {
-            printf("Current userID: 0x%lx 0x%lx\n", (u64)(userID>>64), (u64)userID);
+            printf("Current userID: 0x%lx 0x%lx\n", userID.uid[1], userID.uid[0]);
 
-            rc = accountGetProfile(&profile, userID);
+            rc = accountGetProfile(&profile, &userID);
 
             if (R_FAILED(rc)) {
                 printf("accountGetProfile() failed: 0x%x\n", rc);
@@ -51,10 +51,10 @@ int main(int argc, char **argv)
             }
 
             if (R_SUCCEEDED(rc)) {
-                memset(username,  0, sizeof(username));
-                strncpy(username, profilebase.username, sizeof(username)-1);//Even though profilebase.username usually has a NUL-terminator, don't assume it does for safety.
+                memset(nickname,  0, sizeof(nickname));
+                strncpy(nickname, profilebase.nickname, sizeof(nickname)-1);//Copy the nickname elsewhere to make sure it's NUL-terminated.
 
-                printf("Username: %s\n", username);//Note that the print-console doesn't support UTF-8. The username is UTF-8, so this will only display properly if there isn't any non-ASCII characters. To display it properly, a print method which supports UTF-8 should be used instead.
+                printf("Nickname: %s\n", nickname);//Note that the print-console doesn't support UTF-8. The nickname is UTF-8, so this will only display properly if there isn't any non-ASCII characters. To display it properly, a print method which supports UTF-8 should be used instead.
 
                 //You can also use accountProfileGetImageSize()/accountProfileLoadImage() to load the icon for use with a JPEG library, for displaying the user profile icon. See libnx acc.h.
             }
