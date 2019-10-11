@@ -20,8 +20,8 @@ int main(int argc, char* argv[])
 
     Result rc=0;
     bool initflag=0;
-    size_t i;
-    size_t total_entries;
+    s32 i;
+    s32 total_entries;
     u64 UniquePadIds[2];
     HidsysNotificationLedPattern pattern;
 
@@ -110,12 +110,12 @@ int main(int argc, char* argv[])
             // If you want to get the UniquePadIds for all controllers, you can use hidsysGetUniquePadIds instead.
             rc = hidsysGetUniquePadsFromNpad(hidGetHandheldMode() ? CONTROLLER_HANDHELD : CONTROLLER_PLAYER_1, UniquePadIds, 2, &total_entries);
             printf("hidsysGetUniquePadsFromNpad(): 0x%x", rc);
-            if (R_SUCCEEDED(rc)) printf(", %ld", total_entries);
+            if (R_SUCCEEDED(rc)) printf(", %d", total_entries);
             printf("\n");
 
             if (R_SUCCEEDED(rc)) {
                 for(i=0; i<total_entries; i++) { // System will skip sending the subcommand to controllers where this isn't available.
-                    printf("[%ld] = 0x%lx ", i, UniquePadIds[i]);
+                    printf("[%d] = 0x%lx ", i, UniquePadIds[i]);
                     rc = hidsysSetNotificationLedPattern(&pattern, UniquePadIds[i]);
                     printf("hidsysSetNotificationLedPattern(): 0x%x\n", rc);
                 }
