@@ -38,7 +38,7 @@ Result process_amiibo(u32 app_id) {
     HidControllerID controller = 0;
     if (R_SUCCEEDED(rc)) {
         s32 device_count;
-        rc = nfpuListDevices(&device_count, &controller, 1);
+        rc = nfpListDevices(&device_count, &controller, 1);
 
         if (R_FAILED(rc))
             return rc;
@@ -46,31 +46,31 @@ Result process_amiibo(u32 app_id) {
 
     // Get the activation event. This is signaled when a tag is detected.
     Event activate_event = {0};
-    if (R_FAILED(nfpuAttachActivateEvent(controller, &activate_event)))
+    if (R_FAILED(nfpAttachActivateEvent(controller, &activate_event)))
         goto fail_0;
 
     // Get the deactivation event. This is signaled when a tag is removed.
     Event deactivate_event = {0};
-    if (R_FAILED(nfpuAttachDeactivateEvent(controller, &deactivate_event)))
+    if (R_FAILED(nfpAttachDeactivateEvent(controller, &deactivate_event)))
         goto fail_1;
 
-    NfpuState state = 0;
+    NfpState state = 0;
     if (R_SUCCEEDED(rc)) {
-        rc = nfpuGetState(&state);
+        rc = nfpGetState(&state);
 
-        if (R_SUCCEEDED(rc) && state == NfpuState_NonInitialized) {
-            printf("Bad nfpu state: %u\n", state);
+        if (R_SUCCEEDED(rc) && state == NfpState_NonInitialized) {
+            printf("Bad nfp state: %u\n", state);
             consoleUpdate(NULL);
             rc = -1;
         }
     }
 
-    NfpuDeviceState device_state = 0;
+    NfpDeviceState device_state = 0;
     if (R_SUCCEEDED(rc)) {
-        rc = nfpuGetDeviceState(controller, &device_state);
+        rc = nfpGetDeviceState(controller, &device_state);
 
-        if (R_SUCCEEDED(rc) && device_state > NfpuDeviceState_TagFound) {
-            printf("Bad nfpu device state: %u\n", device_state);
+        if (R_SUCCEEDED(rc) && device_state > NfpDeviceState_TagFound) {
+            printf("Bad nfp device state: %u\n", device_state);
             consoleUpdate(NULL);
             rc = -1;
         }
@@ -80,14 +80,14 @@ Result process_amiibo(u32 app_id) {
         goto fail_1;
 
     // Start the detection of tags.
-    rc = nfpuStartDetection(controller);
+    rc = nfpStartDetection(controller);
     if (R_SUCCEEDED(rc)) {
         printf("Scanning for a tag...\n");
         consoleUpdate(NULL);
     }
 
     // Wait until a tag is detected.
-    // You could also wait until nfpuGetDeviceState returns NfpuDeviceState_TagFound.
+    // You could also wait until nfpGetDeviceState returns NfpDeviceState_TagFound.
     if (R_SUCCEEDED(rc)) {
         rc = eventWaitLoop(&activate_event);
 
@@ -99,12 +99,12 @@ Result process_amiibo(u32 app_id) {
 
     // If a tag was successfully detected, load it into memory.
     if (R_SUCCEEDED(rc))
-        rc = nfpuMount(controller, NfpuDeviceType_Amiibo, NfpuMountTarget_All);
+        rc = nfpMount(controller, NfpDeviceType_Amiibo, NfpMountTarget_All);
 
     // Retrieve the model info data, which contains the amiibo id.
     if (R_SUCCEEDED(rc)) {
-        NfpuModelInfo model_info = {0};
-        rc = nfpuGetModelInfo(controller, &model_info);
+        NfpModelInfo model_info = {0};
+        rc = nfpGetModelInfo(controller, &model_info);
 
         if (R_SUCCEEDED(rc)) {
             printf("Amiibo ID: ");
@@ -115,8 +115,8 @@ Result process_amiibo(u32 app_id) {
     // Retrieve the common info data, which contains the application area size.
     u32 app_area_size = 0;
     if (R_SUCCEEDED(rc)) {
-        NfpuCommonInfo common_info = {0};
-        rc = nfpuGetCommonInfo(controller, &common_info);
+        NfpCommonInfo common_info = {0};
+        rc = nfpGetCommonInfo(controller, &common_info);
 
         if (R_SUCCEEDED(rc))
             app_area_size = common_info.application_area_size;
@@ -124,7 +124,7 @@ Result process_amiibo(u32 app_id) {
 
     u32 npad_id = 0;
     if (R_SUCCEEDED(rc)) {
-        rc = nfpuOpenApplicationArea(controller, app_id, &npad_id);
+        rc = nfpOpenApplicationArea(controller, app_id, &npad_id);
 
         if (rc == 0x10073) // 2115-0128
             printf("This tag contains no application data.\n");
@@ -135,7 +135,7 @@ Result process_amiibo(u32 app_id) {
     u8 app_area[0xd8] = {0}; // Maximum size of the application area.
     if (app_area_size > sizeof(app_area)) app_area_size = sizeof(app_area);
     if (R_SUCCEEDED(rc)) {
-        rc = nfpuGetApplicationArea(controller, app_area, app_area_size);
+        rc = nfpGetApplicationArea(controller, app_area, app_area_size);
 
         if (R_SUCCEEDED(rc)) {
             printf("App area:\n");
@@ -144,7 +144,7 @@ Result process_amiibo(u32 app_id) {
     }
 
     // Wait until the tag is removed.
-    // You could also wait until nfpuGetDeviceState returns NfpuDeviceState_TagRemoved.
+    // You could also wait until nfpGetDeviceState returns NfpDeviceState_TagRemoved.
     if (R_SUCCEEDED(rc)) {
         printf("You can now remove the tag.\n");
         consoleUpdate(NULL);
@@ -152,10 +152,10 @@ Result process_amiibo(u32 app_id) {
     }
 
     // Unmount the tag.
-    nfpuUnmount(controller);
+    nfpUnmount(controller);
 
     // Stop the detection of tags.
-    nfpuStopDetection(controller);
+    nfpStopDetection(controller);
 
     // Cleanup.
 fail_1:
@@ -186,18 +186,20 @@ int main(int argc, char* argv[])
     printf("Scan an amiibo tag to display information about it.\n\n");
     consoleUpdate(NULL);
 
-    // Initialize the nfp:user and nfc:user services.
-    rc = nfpuInitialize(NULL);
+    // Initialize the nfp:* service.
+    rc = nfpInitialize();
 
     // Check if NFC is enabled. If not, wait until it is.
+    // Note that various official games don't use nfc*().
+    if (R_SUCCEEDED(rc)) rc = nfcInitialize();
     if (R_SUCCEEDED(rc)) {
         bool nfc_enabled = false;
-        rc = nfpuIsNfcEnabled(&nfc_enabled);
+        rc = nfcIsNfcEnabled(&nfc_enabled);
 
         if (R_SUCCEEDED(rc) && !nfc_enabled) {
             // Get the availability change event. This is signaled when a change in NFC availability happens. See libnx nfc.h for the required sysver.
             Event availability_change_event = {0};
-            rc = nfpuAttachAvailabilityChangeEvent(&availability_change_event);
+            rc = nfpAttachAvailabilityChangeEvent(&availability_change_event);
 
             // Wait for a change in availability.
             if (R_SUCCEEDED(rc)) {
@@ -208,6 +210,8 @@ int main(int argc, char* argv[])
 
             eventClose(&availability_change_event);
         }
+
+        nfcExit();
     }
 
     if (R_FAILED(rc))
@@ -244,7 +248,7 @@ int main(int argc, char* argv[])
     }
 
 fail_main:
-    nfpuExit();
+    nfpExit();
 
     // Deinitialize and clean up resources used by the console (important!)
     consoleExit(NULL);
