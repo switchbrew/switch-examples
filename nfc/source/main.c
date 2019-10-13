@@ -37,7 +37,7 @@ Result process_amiibo(u32 app_id) {
     // Get the handle of the first controller with NFC capabilities.
     HidControllerID controller = 0;
     if (R_SUCCEEDED(rc)) {
-        u32 device_count;
+        s32 device_count;
         rc = nfpuListDevices(&device_count, &controller, 1);
 
         if (R_FAILED(rc))
@@ -133,6 +133,7 @@ Result process_amiibo(u32 app_id) {
     }
 
     u8 app_area[0xd8] = {0}; // Maximum size of the application area.
+    if (app_area_size > sizeof(app_area)) app_area_size = sizeof(app_area);
     if (R_SUCCEEDED(rc)) {
         rc = nfpuGetApplicationArea(controller, app_area, app_area_size);
 
@@ -194,7 +195,7 @@ int main(int argc, char* argv[])
         rc = nfpuIsNfcEnabled(&nfc_enabled);
 
         if (R_SUCCEEDED(rc) && !nfc_enabled) {
-            // Get the availability change event. This is signaled when a change in NFC availability happens.
+            // Get the availability change event. This is signaled when a change in NFC availability happens. See libnx nfc.h for the required sysver.
             Event availability_change_event = {0};
             rc = nfpuAttachAvailabilityChangeEvent(&availability_change_event);
 
