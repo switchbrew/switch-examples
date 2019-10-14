@@ -35,10 +35,10 @@ Result process_amiibo(u32 app_id) {
     Result rc = 0;
 
     // Get the handle of the first controller with NFC capabilities.
-    HidControllerID controller = 0;
+    NfcDeviceHandle handle={0};
     if (R_SUCCEEDED(rc)) {
         s32 device_count;
-        rc = nfpListDevices(&device_count, &controller, 1);
+        rc = nfpListDevices(&device_count, &handle, 1);
 
         if (R_FAILED(rc))
             return rc;
@@ -46,12 +46,12 @@ Result process_amiibo(u32 app_id) {
 
     // Get the activation event. This is signaled when a tag is detected.
     Event activate_event = {0};
-    if (R_FAILED(nfpAttachActivateEvent(controller, &activate_event)))
+    if (R_FAILED(nfpAttachActivateEvent(&handle, &activate_event)))
         goto fail_0;
 
     // Get the deactivation event. This is signaled when a tag is removed.
     Event deactivate_event = {0};
-    if (R_FAILED(nfpAttachDeactivateEvent(controller, &deactivate_event)))
+    if (R_FAILED(nfpAttachDeactivateEvent(&handle, &deactivate_event)))
         goto fail_1;
 
     NfpState state = 0;
@@ -67,7 +67,7 @@ Result process_amiibo(u32 app_id) {
 
     NfpDeviceState device_state = 0;
     if (R_SUCCEEDED(rc)) {
-        rc = nfpGetDeviceState(controller, &device_state);
+        rc = nfpGetDeviceState(&handle, &device_state);
 
         if (R_SUCCEEDED(rc) && device_state > NfpDeviceState_TagFound) {
             printf("Bad nfp device state: %u\n", device_state);
@@ -80,7 +80,7 @@ Result process_amiibo(u32 app_id) {
         goto fail_1;
 
     // Start the detection of tags.
-    rc = nfpStartDetection(controller);
+    rc = nfpStartDetection(&handle);
     if (R_SUCCEEDED(rc)) {
         printf("Scanning for a tag...\n");
         consoleUpdate(NULL);
@@ -99,12 +99,12 @@ Result process_amiibo(u32 app_id) {
 
     // If a tag was successfully detected, load it into memory.
     if (R_SUCCEEDED(rc))
-        rc = nfpMount(controller, NfpDeviceType_Amiibo, NfpMountTarget_All);
+        rc = nfpMount(&handle, NfpDeviceType_Amiibo, NfpMountTarget_All);
 
     // Retrieve the model info data, which contains the amiibo id.
     if (R_SUCCEEDED(rc)) {
         NfpModelInfo model_info = {0};
-        rc = nfpGetModelInfo(controller, &model_info);
+        rc = nfpGetModelInfo(&handle, &model_info);
 
         if (R_SUCCEEDED(rc)) {
             printf("Amiibo ID: ");
@@ -116,7 +116,7 @@ Result process_amiibo(u32 app_id) {
     u32 app_area_size = 0;
     if (R_SUCCEEDED(rc)) {
         NfpCommonInfo common_info = {0};
-        rc = nfpGetCommonInfo(controller, &common_info);
+        rc = nfpGetCommonInfo(&handle, &common_info);
 
         if (R_SUCCEEDED(rc))
             app_area_size = common_info.application_area_size;
@@ -124,7 +124,7 @@ Result process_amiibo(u32 app_id) {
 
     u32 npad_id = 0;
     if (R_SUCCEEDED(rc)) {
-        rc = nfpOpenApplicationArea(controller, app_id, &npad_id);
+        rc = nfpOpenApplicationArea(&handle, app_id, &npad_id);
 
         if (rc == 0x10073) // 2115-0128
             printf("This tag contains no application data.\n");
@@ -135,7 +135,7 @@ Result process_amiibo(u32 app_id) {
     u8 app_area[0xd8] = {0}; // Maximum size of the application area.
     if (app_area_size > sizeof(app_area)) app_area_size = sizeof(app_area);
     if (R_SUCCEEDED(rc)) {
-        rc = nfpGetApplicationArea(controller, app_area, app_area_size);
+        rc = nfpGetApplicationArea(&handle, app_area, app_area_size);
 
         if (R_SUCCEEDED(rc)) {
             printf("App area:\n");
@@ -152,10 +152,10 @@ Result process_amiibo(u32 app_id) {
     }
 
     // Unmount the tag.
-    nfpUnmount(controller);
+    nfpUnmount(&handle);
 
     // Stop the detection of tags.
-    nfpStopDetection(controller);
+    nfpStopDetection(&handle);
 
     // Cleanup.
 fail_1:
