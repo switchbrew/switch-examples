@@ -24,16 +24,27 @@ int main(int argc, char* argv[])
 
     Result rc=0;
     PdmApplicationPlayStatistics stats[1];
-    PdmApplicationEvent events[1];
+    PdmAppletEvent events[1];
     u64 titleIDs[1] = {0x010021B002EEA000}; // Change this to the titleID of the current-process / the titleID you want to use.
     s32 total_out;
     s32 i;
     bool initflag=0;
 
+    // Only needed when using the cmds which require the Uid.
+    AccountUid preselected_uid={0};
+    rc = accountInitialize();
+    if (R_SUCCEEDED(rc)) {
+        rc = accountGetPreselectedUser(&preselected_uid);
+        accountExit();
+    }
+    if (R_FAILED(rc)) printf("Failed to get user: 0x%x\n", rc);
+
     // Not needed if you just want to use the applet cmds.
-    rc = pdmqryInitialize();
-    if (R_FAILED(rc)) printf("pdmqryInitialize(): 0x%x\n", rc);
-    if (R_SUCCEEDED(rc)) initflag = true;
+    if (R_SUCCEEDED(rc)) {
+        rc = pdmqryInitialize();
+        if (R_FAILED(rc)) printf("pdmqryInitialize(): 0x%x\n", rc);
+        if (R_SUCCEEDED(rc)) initflag = true;
+    }
 
     printf("Press A to get playstats.\n");
     if (initflag) printf("Press X to use pdmqry.\n");
@@ -58,8 +69,12 @@ int main(int argc, char* argv[])
             memset(stats, 0, sizeof(stats));
             total_out = 0;
 
-            rc = appletQueryApplicationPlayStatistics(stats, titleIDs, sizeof(titleIDs)/sizeof(u64), &total_out);
-            printf("appletQueryApplicationPlayStatistics(): 0x%x\n", rc);
+            if (R_SUCCEEDED(rc)) {
+                rc = appletQueryApplicationPlayStatistics(stats, titleIDs, sizeof(titleIDs)/sizeof(u64), &total_out);
+                printf("appletQueryApplicationPlayStatistics(): 0x%x\n", rc);
+                //rc = appletQueryApplicationPlayStatisticsByUid(&preselected_uid, stats, titleIDs, sizeof(titleIDs)/sizeof(u64), &total_out);
+                //printf("appletQueryApplicationPlayStatisticsByUid(): 0x%x\n", rc);
+            }
             if (R_SUCCEEDED(rc)) {
                 printf("total_out: %d\n", total_out);
                 for (i=0; i<total_out; i++) {
@@ -73,26 +88,60 @@ int main(int argc, char* argv[])
             memset(events, 0, sizeof(events));
             total_out = 0;
 
-            rc = pdmqryQueryApplicationEvent(0, events, sizeof(events)/sizeof(PdmApplicationEvent), &total_out);
-            printf("pdmqryQueryApplicationEvent(): 0x%x\n", rc);
+            // Get PdmAppletEvents.
+            rc = pdmqryQueryAppletEvent(0, events, sizeof(events)/sizeof(PdmAppletEvent), &total_out);
+            printf("pdmqryQueryAppletEvent(): 0x%x\n", rc);
             if (R_SUCCEEDED(rc)) {
                 printf("total_out: %d\n", total_out);
                 for (i=0; i<total_out; i++) {
                     time_t tmptime = pdmPlayTimestampToPosix(events[i].timestampUser);
 
                     printf("%d: ", i);
-                    printf("titleID = 0x%08lX, entryindex = 0x%x, timestampUser = %u, timestampNetwork = %u, eventType = %u, timestampUser = %s\n", events[i].titleID, events[i].entryindex, events[i].timestampUser, events[i].timestampNetwork, events[i].eventType, ctime(&tmptime));
+                    printf("titleID = 0x%08lX, entry_index = 0x%x, timestampUser = %u, timestampNetwork = %u, eventType = %u, timestampUser = %s\n", events[i].titleID, events[i].entry_index, events[i].timestampUser, events[i].timestampNetwork, events[i].eventType, ctime(&tmptime));
                 }
             }
 
-            // For more pdmqry cmds see pdm.h.
+            // Get PdmPlayStatistics for the specified title.
+            PdmPlayStatistics playstats[1]={0};
+            rc = pdmqryQueryPlayStatisticsByApplicationId(titleIDs[0], &playstats[0]);
+            printf("pdmqryQueryPlayStatisticsByApplicationId(): 0x%x\n", rc);
+            if (R_SUCCEEDED(rc)) printf("titleID = 0x%08lX, playtimeMinutes = %u, totalLaunches = %u\n", playstats[0].titleID, playstats[0].playtimeMinutes, playstats[0].totalLaunches);
+
+            // Get PdmPlayStatistics for the specified title and user.
+            rc = pdmqryQueryPlayStatisticsByApplicationIdAndUserAccountId(titleIDs[0], &preselected_uid, &playstats[0]);
+            printf("pdmqryQueryPlayStatisticsByApplicationIdAndUserAccountId(): 0x%x\n", rc);
+            if (R_SUCCEEDED(rc)) printf("titleID = 0x%08lX, playtimeMinutes = %u, totalLaunches = %u\n", playstats[0].titleID, playstats[0].playtimeMinutes, playstats[0].totalLaunches);
+
+            // Get a listing of PdmLastPlayTime for the specified titles.
+            PdmLastPlayTime playtimes[1]={0};
+            rc = pdmqryQueryLastPlayTime(playtimes, titleIDs, 1, &total_out);
+            printf("pdmqryQueryLastPlayTime(): 0x%x, %d\n, ", rc, total_out);
+            if (R_SUCCEEDED(rc)) {
+                for (i=0; i<total_out; i++)
+                    printf("%d: timestampUser = %lu\n", i, pdmPlayTimestampToPosix(playtimes[i].timestampUser));
+            }
+
+            // Get the available range for reading events, see pdm.h.
+            s32 total_entries=0, start_entryindex=0, end_entryindex=0;
+            rc = pdmqryGetAvailablePlayEventRange(&total_entries, &start_entryindex, &end_entryindex);
+            printf("pdmqryGetAvailablePlayEventRange(): 0x%x, 0x%x, 0x%x, 0x%x\n", rc, total_entries, start_entryindex, end_entryindex);
+
+            // Get a listing of titles recently played by the specified user.
+            rc = pdmqryQueryRecentlyPlayedApplication(&preselected_uid, titleIDs, 1, &total_out);
+            printf("pdmqryQueryRecentlyPlayedApplication(): 0x%x, %d\n", rc, total_out);
+            if (R_SUCCEEDED(rc)) {
+                for (i=0; i<total_out; i++)
+                    printf("%d: titleID = 0x%08lX\n", i, titleIDs[i]);
+            }
+
+            // For more cmds, see pdm.h.
         }
 
         // Update the console, sending a new frame to the display
         consoleUpdate(NULL);
     }
 
-    if (initflag) pdmqryExit();
+    pdmqryExit();
 
     // Deinitialize and clean up resources used by the console (important!)
     consoleExit(NULL);
