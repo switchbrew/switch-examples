@@ -47,7 +47,7 @@ int main(int argc, char **argv)
     u64 i;
     for (i=0; i<4; i++) {
         num_threads = i;
-        rc = threadCreate(&thread[i], threadFunc, (void*)i, 0x10000, 0x2C, -2);
+        rc = threadCreate(&thread[i], threadFunc, (void*)i, NULL, 0x10000, 0x2C, -2);
         if (R_FAILED(rc))
             goto clean_up;
     }

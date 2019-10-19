@@ -59,7 +59,7 @@ int main(int argc, char **argv)
 
     Thread thread;
     Result rc;
-    rc = threadCreate(&thread, threadFunc1, NULL, 0x10000, 0x2C, -2);
+    rc = threadCreate(&thread, threadFunc1, NULL, NULL, 0x10000, 0x2C, -2);
 
     if (R_SUCCEEDED(rc))
     {
