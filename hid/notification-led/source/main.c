@@ -50,7 +50,7 @@ int main(int argc, char* argv[])
         u64 kDown = hidKeysDown(CONTROLLER_P1_AUTO);
 
         if (kDown & KEY_PLUS) {
-            // Disable notification led.
+            // Disable notification led. Only needed with hidsysSetNotificationLedPattern, with hidsysSetNotificationLedPatternWithTimeout the LED will be automatically disabled via the timeout.
             memset(&pattern, 0, sizeof(pattern));
         }
         else if (kDown & KEY_A) {
@@ -106,7 +106,7 @@ int main(int argc, char* argv[])
             total_entries = 0;
             memset(UniquePadIds, 0, sizeof(UniquePadIds));
 
-            // Get the UniquePadIds for the specified controller, which will then be used with hidsysSetNotificationLedPattern.
+            // Get the UniquePadIds for the specified controller, which will then be used with hidsysSetNotificationLedPattern*.
             // If you want to get the UniquePadIds for all controllers, you can use hidsysGetUniquePadIds instead.
             rc = hidsysGetUniquePadsFromNpad(hidGetHandheldMode() ? CONTROLLER_HANDHELD : CONTROLLER_PLAYER_1, UniquePadIds, 2, &total_entries);
             printf("hidsysGetUniquePadsFromNpad(): 0x%x", rc);
@@ -116,8 +116,14 @@ int main(int argc, char* argv[])
             if (R_SUCCEEDED(rc)) {
                 for(i=0; i<total_entries; i++) { // System will skip sending the subcommand to controllers where this isn't available.
                     printf("[%d] = 0x%lx ", i, UniquePadIds[i]);
-                    rc = hidsysSetNotificationLedPattern(&pattern, UniquePadIds[i]);
-                    printf("hidsysSetNotificationLedPattern(): 0x%x\n", rc);
+
+                    // Attempt to use hidsysSetNotificationLedPatternWithTimeout first with a 2 second timeout, then fallback to hidsysSetNotificationLedPattern on failure. See hidsys.h for the requirements for using these.
+                    rc = hidsysSetNotificationLedPatternWithTimeout(&pattern, UniquePadIds[i], 2000000000ULL);
+                    printf("hidsysSetNotificationLedPatternWithTimeout(): 0x%x\n", rc);
+                    if (R_FAILED(rc)) {
+                        rc = hidsysSetNotificationLedPattern(&pattern, UniquePadIds[i]);
+                        printf("hidsysSetNotificationLedPattern(): 0x%x\n", rc);
+                    }
                 }
             }
         }
