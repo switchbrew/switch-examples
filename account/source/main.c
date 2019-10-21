@@ -36,7 +36,7 @@ int main(int argc, char **argv)
         if (R_SUCCEEDED(rc)) {
             printf("Current userID: 0x%lx 0x%lx\n", userID.uid[1], userID.uid[0]);
 
-            rc = accountGetProfile(&profile, &userID);
+            rc = accountGetProfile(&profile, userID);
 
             if (R_FAILED(rc)) {
                 printf("accountGetProfile() failed: 0x%x\n", rc);

@@ -72,7 +72,7 @@ int main(int argc, char* argv[])
             if (R_SUCCEEDED(rc)) {
                 rc = appletQueryApplicationPlayStatistics(stats, titleIDs, sizeof(titleIDs)/sizeof(u64), &total_out);
                 printf("appletQueryApplicationPlayStatistics(): 0x%x\n", rc);
-                //rc = appletQueryApplicationPlayStatisticsByUid(&preselected_uid, stats, titleIDs, sizeof(titleIDs)/sizeof(u64), &total_out);
+                //rc = appletQueryApplicationPlayStatisticsByUid(preselected_uid, stats, titleIDs, sizeof(titleIDs)/sizeof(u64), &total_out);
                 //printf("appletQueryApplicationPlayStatisticsByUid(): 0x%x\n", rc);
             }
             if (R_SUCCEEDED(rc)) {
@@ -108,7 +108,7 @@ int main(int argc, char* argv[])
             if (R_SUCCEEDED(rc)) printf("titleID = 0x%08lX, playtimeMinutes = %u, totalLaunches = %u\n", playstats[0].titleID, playstats[0].playtimeMinutes, playstats[0].totalLaunches);
 
             // Get PdmPlayStatistics for the specified title and user.
-            rc = pdmqryQueryPlayStatisticsByApplicationIdAndUserAccountId(titleIDs[0], &preselected_uid, &playstats[0]);
+            rc = pdmqryQueryPlayStatisticsByApplicationIdAndUserAccountId(titleIDs[0], preselected_uid, &playstats[0]);
             printf("pdmqryQueryPlayStatisticsByApplicationIdAndUserAccountId(): 0x%x\n", rc);
             if (R_SUCCEEDED(rc)) printf("titleID = 0x%08lX, playtimeMinutes = %u, totalLaunches = %u\n", playstats[0].titleID, playstats[0].playtimeMinutes, playstats[0].totalLaunches);
 
@@ -127,7 +127,7 @@ int main(int argc, char* argv[])
             printf("pdmqryGetAvailablePlayEventRange(): 0x%x, 0x%x, 0x%x, 0x%x\n", rc, total_entries, start_entryindex, end_entryindex);
 
             // Get a listing of titles recently played by the specified user.
-            rc = pdmqryQueryRecentlyPlayedApplication(&preselected_uid, titleIDs, 1, &total_out);
+            rc = pdmqryQueryRecentlyPlayedApplication(preselected_uid, titleIDs, 1, &total_out);
             printf("pdmqryQueryRecentlyPlayedApplication(): 0x%x, %d\n", rc, total_out);
             if (R_SUCCEEDED(rc)) {
                 for (i=0; i<total_out; i++)

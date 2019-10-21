@@ -9,19 +9,19 @@
 Result get_save(u64 *titleID, AccountUid *userID)
 {
     Result rc=0;
-    FsSaveDataIterator iterator;
+    FsSaveDataInfoReader reader;
     size_t total_entries=0;
     FsSaveDataInfo info;
 
-    rc = fsOpenSaveDataIterator(&iterator, FsSaveDataSpaceId_NandUser);//See libnx fs.h.
+    rc = fsOpenSaveDataInfoReader(&reader, FsSaveDataSpaceId_NandUser);//See libnx fs.h.
     if (R_FAILED(rc)) {
-        printf("fsOpenSaveDataIterator() failed: 0x%x\n", rc);
+        printf("fsOpenSaveDataInfoReader() failed: 0x%x\n", rc);
         return rc;
     }
 
     //Find the first savedata with FsSaveDataType_SaveData.
     while(1) {
-        rc = fsSaveDataIteratorRead(&iterator, &info, 1, &total_entries);//See libnx fs.h.
+        rc = fsSaveDataInfoReaderRead(&reader, &info, 1, &total_entries);//See libnx fs.h.
         if (R_FAILED(rc) || total_entries==0) break;
 
         if (info.saveDataType == FsSaveDataType_SaveData) {//Filter by FsSaveDataType_SaveData, however note that NandUser can have non-FsSaveDataType_SaveData.
@@ -31,7 +31,7 @@ Result get_save(u64 *titleID, AccountUid *userID)
         }
     }
 
-    fsSaveDataIteratorClose(&iterator);
+    fsSaveDataInfoReaderClose(&reader);
 
     if (R_SUCCEEDED(rc)) return MAKERESULT(Module_Libnx, LibnxError_NotFound);
 
@@ -41,12 +41,10 @@ Result get_save(u64 *titleID, AccountUid *userID)
 int main(int argc, char **argv)
 {
     Result rc=0;
-    int ret=0;
 
     DIR* dir;
     struct dirent* ent;
 
-    FsFileSystem tmpfs;
     AccountUid userID={0};
     u64 titleID=0x01007ef00011e000;//titleID of the save to mount, in this case BOTW.
 
@@ -77,19 +75,11 @@ int main(int argc, char **argv)
         printf("Using titleID=0x%016lx userID: 0x%lx 0x%lx\n", titleID, userID.uid[1], userID.uid[0]);
     }
 
-    if (R_SUCCEEDED(rc)) {
-        rc = fsMount_SaveData(&tmpfs, titleID, &userID);//See also libnx fs.h.
-        if (R_FAILED(rc)) {
-            printf("fsMount_SaveData() failed: 0x%x\n", rc);
-        }
-    }
-
     //You can use any device-name. If you want multiple saves mounted at the same time, you must use different device-names for each one.
     if (R_SUCCEEDED(rc)) {
-        ret = fsdevMountDevice("save", tmpfs);
-        if (ret==-1) {
-            printf("fsdevMountDevice() failed.\n");
-            rc = ret;
+        rc = fsdevMountSaveData("save", titleID, userID);//See also libnx fs.h/fs_dev.h
+        if (R_FAILED(rc)) {
+            printf("fsdevMountSaveData() failed: 0x%x\n", rc);
         }
     }
 
