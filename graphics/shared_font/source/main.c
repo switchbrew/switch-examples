@@ -134,7 +134,7 @@ void userAppInit(void)
 
     rc = plInitialize();
     if (R_FAILED(rc))
-        fatalSimple(rc);
+        fatalThrow(rc);
 
     LanguageCode = getSystemLanguage();
 }

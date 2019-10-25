@@ -35,23 +35,23 @@ void __attribute__((weak)) __appInit(void)
     // Initialize default services.
     rc = smInitialize();
     if (R_FAILED(rc))
-        fatalSimple(MAKERESULT(Module_Libnx, LibnxError_InitFail_SM));
+        fatalThrow(MAKERESULT(Module_Libnx, LibnxError_InitFail_SM));
 
     // Enable this if you want to use HID.
     /*rc = hidInitialize();
     if (R_FAILED(rc))
-        fatalSimple(MAKERESULT(Module_Libnx, LibnxError_InitFail_HID));*/
+        fatalThrow(MAKERESULT(Module_Libnx, LibnxError_InitFail_HID));*/
 
     //Enable this if you want to use time.
     /*rc = timeInitialize();
     if (R_FAILED(rc))
-        fatalSimple(MAKERESULT(Module_Libnx, LibnxError_InitFail_Time));
+        fatalThrow(MAKERESULT(Module_Libnx, LibnxError_InitFail_Time));
 
     __libnx_init_time();*/
 
     rc = fsInitialize();
     if (R_FAILED(rc))
-        fatalSimple(MAKERESULT(Module_Libnx, LibnxError_InitFail_FS));
+        fatalThrow(MAKERESULT(Module_Libnx, LibnxError_InitFail_FS));
 
     fsdevMountSdmc();
 }

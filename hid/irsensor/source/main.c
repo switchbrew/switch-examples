@@ -17,7 +17,7 @@ void userAppInit(void)
 
     rc = irsInitialize();
     if (R_FAILED(rc))
-        fatalSimple(rc);
+        fatalThrow(rc);
 }
 
 void userAppExit(void)
