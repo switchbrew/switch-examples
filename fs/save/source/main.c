@@ -6,8 +6,7 @@
 
 //This example shows how to access savedata for (official) applications/games.
 
-Result get_save(u64 *titleID, AccountUid *userID)
-{
+Result get_save(u64 *application_id, AccountUid *uid) {
     Result rc=0;
     FsSaveDataInfoReader reader;
     size_t total_entries=0;
@@ -25,8 +24,8 @@ Result get_save(u64 *titleID, AccountUid *userID)
         if (R_FAILED(rc) || total_entries==0) break;
 
         if (info.saveDataType == FsSaveDataType_SaveData) {//Filter by FsSaveDataType_SaveData, however note that NandUser can have non-FsSaveDataType_SaveData.
-            *titleID = info.titleID;
-            *userID = info.userID;
+            *application_id = info.application_id;
+            *uid = info.uid;
             return 0;
         }
     }
@@ -45,8 +44,8 @@ int main(int argc, char **argv)
     DIR* dir;
     struct dirent* ent;
 
-    AccountUid userID={0};
-    u64 titleID=0x01007ef00011e000;//titleID of the save to mount, in this case BOTW.
+    AccountUid uid={0};
+    u64 application_id=0x01007ef00011e000;//ApplicationId of the save to mount, in this case BOTW.
 
     consoleInit(NULL);
 
@@ -54,15 +53,15 @@ int main(int argc, char **argv)
 
     //Try to find savedata to use with get_save() first, otherwise fallback to the above hard-coded TID + the userID from accountGetPreselectedUser(). Note that you can use either method.
     //See the account example for getting account info for an userID.
-    //See also the app_controldata example for getting info for a titleID.
-    if (R_FAILED(get_save(&titleID, &userID))) {
+    //See also the app_controldata example for getting info for an application_id.
+    if (R_FAILED(get_save(&application_id, &uid))) {
         rc = accountInitialize();
         if (R_FAILED(rc)) {
             printf("accountInitialize() failed: 0x%x\n", rc);
         }
 
         if (R_SUCCEEDED(rc)) {
-            rc = accountGetPreselectedUser(&userID);
+            rc = accountGetPreselectedUser(&uid);
             accountExit();
 
             if (R_FAILED(rc)) {
@@ -72,12 +71,12 @@ int main(int argc, char **argv)
     }
 
     if (R_SUCCEEDED(rc)) {
-        printf("Using titleID=0x%016lx userID: 0x%lx 0x%lx\n", titleID, userID.uid[1], userID.uid[0]);
+        printf("Using application_id=0x%016lx uid: 0x%lx 0x%lx\n", application_id, uid.uid[1], uid.uid[0]);
     }
 
     //You can use any device-name. If you want multiple saves mounted at the same time, you must use different device-names for each one.
     if (R_SUCCEEDED(rc)) {
-        rc = fsdevMountSaveData("save", titleID, userID);//See also libnx fs.h/fs_dev.h
+        rc = fsdevMountSaveData("save", application_id, uid);//See also libnx fs.h/fs_dev.h
         if (R_FAILED(rc)) {
             printf("fsdevMountSaveData() failed: 0x%x\n", rc);
         }
