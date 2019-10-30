@@ -8,20 +8,21 @@
 #include <switch.h>
 
 // This example shows how to use USB devices via usbhs, see also libnx usbhs.h/usb.h.
-// Only devices which are not used by sysmodules are usable. With the below filter, this will only detect USB mass storage devices.
+// Only devices which are not used by sysmodules are usable. This example will only detect/use USB mass storage devices.
 
 // Main program entrypoint
 int main(int argc, char* argv[])
 {
-    Result rc=0;
+    Result rc=0, rc2=0;
     s32 total_entries=0;
     s32 i, epi, tmpi;
     Event inf_event;
     struct usb_endpoint_descriptor *ep_desc = NULL;
-    UsbHsClientIfSession inf_session;//This example only uses 1 interface/endpoint, an actual app may use multiple.
-    UsbHsClientEpSession ep_session;
+    UsbHsClientIfSession inf_session; // This example only uses 1 interface and 2 endpoints, an actual app may differ.
+    UsbHsClientEpSession ep_sessions[2];
     UsbHsInterfaceFilter filter;
     UsbHsInterface interfaces[8];
+    bool endpoints_found[2];
 
     // This example uses a text console, as a simple way to output text to the screen.
     // If you want to write a software-rendered graphics application,
@@ -36,9 +37,9 @@ int main(int argc, char* argv[])
     memset(&filter, 0, sizeof(filter));
     memset(interfaces, 0, sizeof(interfaces));
     memset(&inf_session, 0, sizeof(inf_session));
-    memset(&ep_session, 0, sizeof(ep_session));
+    memset(&ep_sessions, 0, sizeof(ep_sessions));
 
-    //See libnx usbhs.h regarding filtering. Flags has to be set, since [7.0.0+] doesn't allow using a filter struct which matches an existing one.
+    // See libnx usbhs.h regarding filtering. Flags has to be set, since [7.0.0+] doesn't allow using a filter struct which matches an existing one.
     filter.Flags = UsbHsInterfaceFilterFlags_bInterfaceClass;
     filter.bInterfaceClass = USB_CLASS_MASS_STORAGE;
 
@@ -51,6 +52,8 @@ int main(int argc, char* argv[])
     }
 
     if (R_SUCCEEDED(rc)) printf("Ready.\n");
+
+    rc2=rc;
 
     // Main loop
     while (appletMainLoop())
@@ -65,8 +68,8 @@ int main(int argc, char* argv[])
         if (kDown & KEY_PLUS)
             break; // break in order to return to hbmenu
 
-        rc = eventWait(&inf_event, 0);
-        if (R_SUCCEEDED(rc)) {
+        if (R_SUCCEEDED(rc2)) rc = eventWait(&inf_event, 0);
+        if (R_SUCCEEDED(rc2) && R_SUCCEEDED(rc)) {
             printf("The available interfaces have changed.\n");
 
             memset(interfaces, 0, sizeof(interfaces));
@@ -103,46 +106,85 @@ int main(int argc, char* argv[])
                             rc = 1;
 
                             // Locate any endpoints you want to use by going through input_endpoint_descs/output_endpoint_descs.
+                            // Note that official sw uses control transfer(s) to get the descriptors (see above).
+                            // This example uses 1 OUTPUT and INPUT endpoint, with an actual app this may differ.
+                            memset(endpoints_found, 0, sizeof(endpoints_found));
                             for(epi=0; epi<15; epi++) {
-                                ep_desc = &inf_session.inf.inf.input_endpoint_descs[epi];
-                                if(ep_desc->bLength != 0) {
-                                    printf("Using endpoint %d.\n", epi);
+                                ep_desc = &inf_session.inf.inf.output_endpoint_descs[epi];
+                                if (ep_desc->bLength != 0 && ep_desc->bEndpointAddress == (USB_ENDPOINT_OUT | 0x1)) {
+                                    printf("Using OUTPUT endpoint %d.\n", epi);
 
-                                    rc = usbHsIfOpenUsbEp(&inf_session, &ep_session, 1, ep_desc->wMaxPacketSize, ep_desc);
+                                    endpoints_found[0] = true;
+                                    rc = usbHsIfOpenUsbEp(&inf_session, &ep_sessions[0], 1, ep_desc->wMaxPacketSize, ep_desc);
                                     printf("usbHsIfOpenUsbEp returned: 0x%x\n", rc);
-
-                                    break;
+                                    if (R_FAILED(rc)) break;
                                 }
+
+                                ep_desc = &inf_session.inf.inf.input_endpoint_descs[epi];
+                                if (ep_desc->bLength != 0 && ep_desc->bEndpointAddress == (USB_ENDPOINT_IN | 0x2)) {
+                                    printf("Using INPUT endpoint %d.\n", epi);
+
+                                    endpoints_found[1] = true;
+                                    rc = usbHsIfOpenUsbEp(&inf_session, &ep_sessions[1], 1, ep_desc->wMaxPacketSize, ep_desc);
+                                    printf("usbHsIfOpenUsbEp returned: 0x%x\n", rc);
+                                    if (R_FAILED(rc)) break;
+                                }
+
+                                if (endpoints_found[0] && endpoints_found[1]) break;
                             }
 
-                            // Since this example uses just any device, this may not work for some devices since this doesn't use a proper protocol. Some devices might need unplugged and plugged back in for this to work, after running this example once.
+                            if (!endpoints_found[0] || !endpoints_found[1]) {
+                                printf("Failed to find the required endpoints.\n");
+                                rc = 2;
+                            }
+
+                            // Use the endpoints. An actual app would have different endpoint handling, depending on the USB device.
+
+                            // Write data to the OUTPUT endpoint. In this case this is a mass-storage SCSI Inquiry.
+                            // Note that an actual app may want to validate transferredSize.
                             if (R_SUCCEEDED(rc)) {
                                 memset(tmpbuf, 0, 0x1000);
+
+                                u8 tmpdata[] = {0x55, 0x53, 0x42, 0x43, 0x01, 0x00, 0x00, 0x00, 0x24, 0x00, 0x00, 0x00, 0x80, 0x00, 0x06, 0x12, 0x00, 0x00, 0x00, 0x24, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+                                memcpy(tmpbuf, tmpdata, sizeof(tmpdata));
+
                                 transferredSize = 0;
-                                rc = usbHsEpPostBuffer(&ep_session, tmpbuf, 0x10, &transferredSize);
+                                rc = usbHsEpPostBuffer(&ep_sessions[0], tmpbuf, sizeof(tmpdata), &transferredSize);
+                                printf("usbHsEpPostBuffer returned: 0x%x, transferredSize=0x%x\n", rc, transferredSize);
+                            }
+
+                            // Read data from the INPUT endpoint. In this case this is mass-storage SCSI Inquiry response data.
+                            // Note that an actual app may want to validate transferredSize.
+                            if (R_SUCCEEDED(rc)) {
+                                memset(tmpbuf, 0, 0x1000);
+
+                                transferredSize = 0;
+                                rc = usbHsEpPostBuffer(&ep_sessions[1], tmpbuf, 0x200, &transferredSize);
                                 printf("usbHsEpPostBuffer returned: 0x%x, transferredSize=0x%x\n", rc, transferredSize);
                                 if (R_SUCCEEDED(rc)) {
                                     for(tmpi=0; tmpi<transferredSize; tmpi++)printf("%02X", tmpbuf[tmpi]);
                                     printf("\n");
                                 }
-
-                                usbHsEpClose(&ep_session);//At this point this example is done using the endpoint, close it.
                             }
+
+                            // At this point this example is done using the endpoints, close these.
+                            usbHsEpClose(&ep_sessions[0]);
+                            usbHsEpClose(&ep_sessions[1]);
 
                             free(tmpbuf);
                         }
                         else
                             printf("tmpbuf alloc failed.\n");
 
-                        usbHsIfClose(&inf_session);//At this point this example is done using the interface, close it.
+                        usbHsIfClose(&inf_session); // At this point this example is done using the interface, close it.
                     }
                 }
             }
         }
 
         // Signaled when a device was removed, cleanup state if our interface can't be found in the usbHsQueryAcquiredInterfaces output.
-        rc = eventWait(usbHsGetInterfaceStateChangeEvent(), 0);
-        if (R_SUCCEEDED(rc)) {
+        if (R_SUCCEEDED(rc2)) rc = eventWait(usbHsGetInterfaceStateChangeEvent(), 0);
+        if (R_SUCCEEDED(rc2) && R_SUCCEEDED(rc)) {
             eventClear(usbHsGetInterfaceStateChangeEvent());
 
             printf("InterfaceStateChangeEvent was signaled.\n");
@@ -164,7 +206,8 @@ int main(int argc, char* argv[])
 
                     if(!found_flag) {
                         printf("Interface not found, cleaning up state...\n");
-                        usbHsEpClose(&ep_session);
+                        usbHsEpClose(&ep_sessions[0]);
+                        usbHsEpClose(&ep_sessions[1]);
                         usbHsIfClose(&inf_session);
                     }
                 }
