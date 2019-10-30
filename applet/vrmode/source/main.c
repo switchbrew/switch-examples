@@ -9,7 +9,7 @@
 // This example shows how to use VrMode, see also libnx applet.h and pctl.h.
 // TODO: This needs replaced with GL rendering, to handle the special VrMode rendering.
 
-// When running on pre-7.0.0, hbl has to run under the labo-vr application for the host title.
+// When running on pre-7.0.0, hbl has to run under the labo-vr application for the host application.
 
 // Main program entrypoint
 int main(int argc, char* argv[])

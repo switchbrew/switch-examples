@@ -49,7 +49,7 @@ int main(int argc, char* argv[])
             WebExitReason exitReason=0;
 
             // Create the config. There's a number of web*Create() funcs, see libnx web.h.
-            // webPageCreate/webNewsCreate requires running under a host title which has HtmlDocument content, when the title is an Application. When the title is an Application when using webPageCreate/webNewsCreate, and webConfigSetWhitelist is not used, the whitelist will be loaded from the content. Atmosphère hbl_html can be used to handle this.
+            // webPageCreate/webNewsCreate requires running under a host Application which has HtmlDocument content. When the host program is an Application when using webPageCreate/webNewsCreate, and webConfigSetWhitelist is not used, the whitelist will be loaded from the content. Atmosphère hbl_html can be used to handle this.
             rc = webPageCreate(&config, "https://google.com/");
             printf("webPageCreate(): 0x%x\n", rc);
 

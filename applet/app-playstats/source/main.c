@@ -25,7 +25,7 @@ int main(int argc, char* argv[])
     Result rc=0;
     PdmApplicationPlayStatistics stats[1];
     PdmAppletEvent events[1];
-    u64 titleIDs[1] = {0x010021B002EEA000}; // Change this to the titleID of the current-process / the titleID you want to use.
+    u64 application_ids[1] = {0x010021B002EEA000}; // Change this to the ApplicationId of the current-process / the ApplicationId you want to use.
     s32 total_out;
     s32 i;
     bool initflag=0;
@@ -70,16 +70,16 @@ int main(int argc, char* argv[])
             total_out = 0;
 
             if (R_SUCCEEDED(rc)) {
-                rc = appletQueryApplicationPlayStatistics(stats, titleIDs, sizeof(titleIDs)/sizeof(u64), &total_out);
+                rc = appletQueryApplicationPlayStatistics(stats, application_ids, sizeof(application_ids)/sizeof(u64), &total_out);
                 printf("appletQueryApplicationPlayStatistics(): 0x%x\n", rc);
-                //rc = appletQueryApplicationPlayStatisticsByUid(preselected_uid, stats, titleIDs, sizeof(titleIDs)/sizeof(u64), &total_out);
+                //rc = appletQueryApplicationPlayStatisticsByUid(preselected_uid, stats, application_ids, sizeof(application_ids)/sizeof(u64), &total_out);
                 //printf("appletQueryApplicationPlayStatisticsByUid(): 0x%x\n", rc);
             }
             if (R_SUCCEEDED(rc)) {
                 printf("total_out: %d\n", total_out);
                 for (i=0; i<total_out; i++) {
                     printf("%d: ", i);
-                    printf("titleID = 0x%08lX, totalPlayTime = %lu (%llu seconds), totalLaunches = %lu\n", stats[i].titleID, stats[i].totalPlayTime, stats[i].totalPlayTime / 1000000000ULL, stats[i].totalLaunches);
+                    printf("application_id = 0x%08lX, totalPlayTime = %lu (%llu seconds), totalLaunches = %lu\n", stats[i].application_id, stats[i].totalPlayTime, stats[i].totalPlayTime / 1000000000ULL, stats[i].totalLaunches);
                 }
             }
         }
@@ -97,24 +97,24 @@ int main(int argc, char* argv[])
                     time_t tmptime = pdmPlayTimestampToPosix(events[i].timestampUser);
 
                     printf("%d: ", i);
-                    printf("titleID = 0x%08lX, entry_index = 0x%x, timestampUser = %u, timestampNetwork = %u, eventType = %u, timestampUser = %s\n", events[i].titleID, events[i].entry_index, events[i].timestampUser, events[i].timestampNetwork, events[i].eventType, ctime(&tmptime));
+                    printf("program_id = 0x%08lX, entry_index = 0x%x, timestampUser = %u, timestampNetwork = %u, eventType = %u, timestampUser = %s\n", events[i].program_id, events[i].entry_index, events[i].timestampUser, events[i].timestampNetwork, events[i].eventType, ctime(&tmptime));
                 }
             }
 
-            // Get PdmPlayStatistics for the specified title.
+            // Get PdmPlayStatistics for the specified ApplicationId.
             PdmPlayStatistics playstats[1]={0};
-            rc = pdmqryQueryPlayStatisticsByApplicationId(titleIDs[0], &playstats[0]);
+            rc = pdmqryQueryPlayStatisticsByApplicationId(application_ids[0], &playstats[0]);
             printf("pdmqryQueryPlayStatisticsByApplicationId(): 0x%x\n", rc);
-            if (R_SUCCEEDED(rc)) printf("titleID = 0x%08lX, playtimeMinutes = %u, totalLaunches = %u\n", playstats[0].titleID, playstats[0].playtimeMinutes, playstats[0].totalLaunches);
+            if (R_SUCCEEDED(rc)) printf("application_id = 0x%08lX, playtimeMinutes = %u, totalLaunches = %u\n", playstats[0].application_id, playstats[0].playtimeMinutes, playstats[0].totalLaunches);
 
-            // Get PdmPlayStatistics for the specified title and user.
-            rc = pdmqryQueryPlayStatisticsByApplicationIdAndUserAccountId(titleIDs[0], preselected_uid, &playstats[0]);
+            // Get PdmPlayStatistics for the specified ApplicationId and user.
+            rc = pdmqryQueryPlayStatisticsByApplicationIdAndUserAccountId(application_ids[0], preselected_uid, &playstats[0]);
             printf("pdmqryQueryPlayStatisticsByApplicationIdAndUserAccountId(): 0x%x\n", rc);
-            if (R_SUCCEEDED(rc)) printf("titleID = 0x%08lX, playtimeMinutes = %u, totalLaunches = %u\n", playstats[0].titleID, playstats[0].playtimeMinutes, playstats[0].totalLaunches);
+            if (R_SUCCEEDED(rc)) printf("application_id = 0x%08lX, playtimeMinutes = %u, totalLaunches = %u\n", playstats[0].application_id, playstats[0].playtimeMinutes, playstats[0].totalLaunches);
 
-            // Get a listing of PdmLastPlayTime for the specified titles.
+            // Get a listing of PdmLastPlayTime for the specified applications.
             PdmLastPlayTime playtimes[1]={0};
-            rc = pdmqryQueryLastPlayTime(playtimes, titleIDs, 1, &total_out);
+            rc = pdmqryQueryLastPlayTime(playtimes, application_ids, 1, &total_out);
             printf("pdmqryQueryLastPlayTime(): 0x%x, %d\n, ", rc, total_out);
             if (R_SUCCEEDED(rc)) {
                 for (i=0; i<total_out; i++)
@@ -126,12 +126,12 @@ int main(int argc, char* argv[])
             rc = pdmqryGetAvailablePlayEventRange(&total_entries, &start_entryindex, &end_entryindex);
             printf("pdmqryGetAvailablePlayEventRange(): 0x%x, 0x%x, 0x%x, 0x%x\n", rc, total_entries, start_entryindex, end_entryindex);
 
-            // Get a listing of titles recently played by the specified user.
-            rc = pdmqryQueryRecentlyPlayedApplication(preselected_uid, titleIDs, 1, &total_out);
+            // Get a listing of applications recently played by the specified user.
+            rc = pdmqryQueryRecentlyPlayedApplication(preselected_uid, application_ids, 1, &total_out);
             printf("pdmqryQueryRecentlyPlayedApplication(): 0x%x, %d\n", rc, total_out);
             if (R_SUCCEEDED(rc)) {
                 for (i=0; i<total_out; i++)
-                    printf("%d: titleID = 0x%08lX\n", i, titleIDs[i]);
+                    printf("%d: application_id = 0x%08lX\n", i, application_ids[i]);
             }
 
             // For more cmds, see pdm.h.
