@@ -12,7 +12,7 @@ Result get_save(u64 *application_id, AccountUid *uid) {
     size_t total_entries=0;
     FsSaveDataInfo info;
 
-    rc = fsOpenSaveDataInfoReader(&reader, FsSaveDataSpaceId_NandUser);//See libnx fs.h.
+    rc = fsOpenSaveDataInfoReader(&reader, FsSaveDataSpaceId_User);//See libnx fs.h.
     if (R_FAILED(rc)) {
         printf("fsOpenSaveDataInfoReader() failed: 0x%x\n", rc);
         return rc;
