@@ -23,7 +23,7 @@ Result get_save(u64 *application_id, AccountUid *uid) {
         rc = fsSaveDataInfoReaderRead(&reader, &info, 1, &total_entries);//See libnx fs.h.
         if (R_FAILED(rc) || total_entries==0) break;
 
-        if (info.saveDataType == FsSaveDataType_SaveData) {//Filter by FsSaveDataType_SaveData, however note that NandUser can have non-FsSaveDataType_SaveData.
+        if (info.save_data_type == FsSaveDataType_Account) {//Filter by FsSaveDataType_Account, however note that FsSaveDataSpaceId_User can have non-FsSaveDataType_Account.
             *application_id = info.application_id;
             *uid = info.uid;
             return 0;
