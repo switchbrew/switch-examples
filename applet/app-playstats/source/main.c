@@ -32,7 +32,7 @@ int main(int argc, char* argv[])
 
     // Only needed when using the cmds which require the Uid.
     AccountUid preselected_uid={0};
-    rc = accountInitialize();
+    rc = accountInitialize(AccountServiceType_Application);
     if (R_SUCCEEDED(rc)) {
         rc = accountGetPreselectedUser(&preselected_uid);
         accountExit();

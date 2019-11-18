@@ -55,7 +55,7 @@ int main(int argc, char **argv)
     //See the account example for getting account info for an userID.
     //See also the app_controldata example for getting info for an application_id.
     if (R_FAILED(get_save(&application_id, &uid))) {
-        rc = accountInitialize();
+        rc = accountInitialize(AccountServiceType_Application);
         if (R_FAILED(rc)) {
             printf("accountInitialize() failed: 0x%x\n", rc);
         }

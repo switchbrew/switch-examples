@@ -187,11 +187,11 @@ int main(int argc, char* argv[])
     consoleUpdate(NULL);
 
     // Initialize the nfp:* service.
-    rc = nfpInitialize();
+    rc = nfpInitialize(NfpServiceType_User);
 
     // Check if NFC is enabled. If not, wait until it is.
     // Note that various official games don't use nfc*().
-    if (R_SUCCEEDED(rc)) rc = nfcInitialize();
+    if (R_SUCCEEDED(rc)) rc = nfcInitialize(NfcServiceType_User);
     if (R_SUCCEEDED(rc)) {
         bool nfc_enabled = false;
         rc = nfcIsNfcEnabled(&nfc_enabled);

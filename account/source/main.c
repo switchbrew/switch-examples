@@ -21,7 +21,7 @@ int main(int argc, char **argv)
     memset(&userdata, 0, sizeof(userdata));
     memset(&profilebase, 0, sizeof(profilebase));
 
-    rc = accountInitialize();
+    rc = accountInitialize(AccountServiceType_Application);
     if (R_FAILED(rc)) {
         printf("accountInitialize() failed: 0x%x\n", rc);
     }
