@@ -9,7 +9,7 @@
 Result get_save(u64 *application_id, AccountUid *uid) {
     Result rc=0;
     FsSaveDataInfoReader reader;
-    size_t total_entries=0;
+    s64 total_entries=0;
     FsSaveDataInfo info;
 
     rc = fsOpenSaveDataInfoReader(&reader, FsSaveDataSpaceId_User);//See libnx fs.h.
