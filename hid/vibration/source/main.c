@@ -4,7 +4,6 @@
 #include <switch.h>
 
 //Example for HID vibration/rumble.
-//For vibration to work you may have to do the following first: enter System-Settings->Controllers, then turn the vibration config to OFF (if it's already ON), then ON.
 
 int main(int argc, char **argv)
 {
@@ -22,10 +21,10 @@ int main(int argc, char **argv)
 
     //Two VibrationDeviceHandles are returned: first one for left-joycon, second one for right-joycon.
     //Change the total_handles param to 1, and update the hidSendVibrationValues calls, if you only want 1 VibrationDeviceHandle.
-    rc = hidInitializeVibrationDevices(VibrationDeviceHandles[0], 2, CONTROLLER_HANDHELD, TYPE_HANDHELD | TYPE_JOYCON_PAIR);
+    rc = hidInitializeVibrationDevices(VibrationDeviceHandles[0], 2, CONTROLLER_HANDHELD, TYPE_HANDHELD);
 
     //Setup VibrationDeviceHandles for CONTROLLER_PLAYER_1 too, since we want to support both CONTROLLER_HANDHELD and CONTROLLER_PLAYER_1.
-    if (R_SUCCEEDED(rc)) rc = hidInitializeVibrationDevices(VibrationDeviceHandles[1], 2, CONTROLLER_PLAYER_1, TYPE_HANDHELD | TYPE_JOYCON_PAIR);
+    if (R_SUCCEEDED(rc)) rc = hidInitializeVibrationDevices(VibrationDeviceHandles[1], 2, CONTROLLER_PLAYER_1, TYPE_JOYCON_PAIR);
     printf("hidInitializeVibrationDevices() returned: 0x%x\n", rc);
 
     if (R_SUCCEEDED(rc)) printf("Hold R to vibrate, and press A/B/X/Y while holding R to adjust values.\n");
