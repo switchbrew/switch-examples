@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>usb-commons example</title>
+  </head>
+
+  <body>
+    <p id='statusMessage'>No device selected. Please, connect your Switch on computer and click on the following button</p>
+    <button id='buttonSelectDevice'>Select device</button>
+    <button id='buttonSendPayload' disabled>Send the payload [1, 2, 3] to device and wait for one</button>
+  </body>
+</html>
+
+<script>
+  const vendorIdSwitch = 0x057E
+  let device
+
+  const updateStatusMessage = text => {
+    document.getElementById('statusMessage').innerText = text
+  }
+
+  const checkBrowserCompatible = () => {
+    if (navigator.usb === undefined) {
+      updateStatusMessage('Sorry, but your browser looks incopatible with usb interface...')
+      document.getElementById('buttonSelectDevice').setAttribute('disabled', true)
+    }
+
+    if (/localhost/.test(window.location.href) === false) {
+      updateStatusMessage('Sorry, but need run this example on localhost! Read the readme and start the python http server.')
+      document.getElementById('buttonSelectDevice').setAttribute('disabled', true)
+    }
+  }
+
+  const selectDevice = () =>
+    navigator.usb.requestDevice({ filters: [{ vendorId: vendorIdSwitch }] })
+      .then(selectedDevice => {
+        device = selectedDevice
+        return device.open()
+      })
+      .then(() => device.selectConfiguration(1)) // by default we have just one configuration, so let's select it
+      .then(() => device.claimInterface(0)) // by default we have just one interface, so let's claim it
+      .then(() => {
+        updateStatusMessage('Device connected')
+
+        document.getElementById('buttonSelectDevice').setAttribute('disabled', true)
+        document.getElementById('buttonSendPayload').removeAttribute('disabled')
+      })
+      .catch(e =>
+        updateStatusMessage(`Error: ${e.message}`)
+      )
+
+  const sendPayload = () =>
+    device.transferOut(1, new Uint8Array([1, 2, 3])) // since Switch is waiting for 3 chars, we need to pack the payload into Uint8Array
+      .then((result) => {
+        if (result.status !== 'ok') {
+          throw new Error('Fail when tried to send the payload')
+        }
+
+        updateStatusMessage('Success to send the payload! Waiting to receive a payload...')
+      })
+      .then(() => device.transferIn(1, 1)) // we are waiting for just one char
+      .then((result) => {
+        if (result.status !== 'ok') {
+          throw new Error('Fail when tried to receive the payload')
+        }
+
+        const resultDataRaw = result.data.getUint8() // char is a Uint8, so let's unpack it
+        const keyTyped = String.fromCharCode(resultDataRaw)
+        updateStatusMessage(`Success to receive the payload! The key ${keyTyped} was typed! Example end`)
+
+        document.getElementById('buttonSendPayload').setAttribute('disabled', true)
+      })
+      .catch(e =>
+        updateStatusMessage(`Error: ${e.message}`)
+      )
+
+  checkBrowserCompatible()
+  document.getElementById('buttonSelectDevice').addEventListener('click', selectDevice)
+  document.getElementById('buttonSendPayload').addEventListener('click', sendPayload)
+</script>
