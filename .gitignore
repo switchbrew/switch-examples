@@ -8,4 +8,5 @@ build
 *.nsp
 *.npdm
 *.bz2
+*.dksh
 *~
