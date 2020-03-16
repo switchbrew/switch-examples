@@ -117,8 +117,8 @@ int main(int argc, char **argv)
         if (kDown & KEY_PLUS) break; // break in order to return to hbmenu
 
         // Wait for audio capture and playback to finish.
-        audinWaitCaptureFinish(&released_in_buffer, &released_in_count, U64_MAX);
-        audoutWaitPlayFinish(&released_out_buffer, &released_out_count, U64_MAX);
+        audinWaitCaptureFinish(&released_in_buffer, &released_in_count, UINT64_MAX);
+        audoutWaitPlayFinish(&released_out_buffer, &released_out_count, UINT64_MAX);
 
         // Copy the captured audio data into the playback buffer.
         if ((released_in_buffer != NULL) && (released_out_buffer != NULL))
@@ -130,11 +130,11 @@ int main(int argc, char **argv)
 
         consoleUpdate(NULL);
     }
-    
+
     // Stop audio capture.
     rc = audinStopAudioIn();
     printf("audinStopAudioIn() returned 0x%x\n", rc);
-    
+
     // Stop audio playback.
     rc = audoutStopAudioOut();
     printf("audoutStopAudioOut() returned 0x%x\n", rc);
@@ -142,7 +142,7 @@ int main(int argc, char **argv)
     // Terminate the default audio devices.
     audinExit();
     audoutExit();
-    
+
     consoleExit(NULL);
     return 0;
 }

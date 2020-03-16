@@ -718,9 +718,9 @@ gears_idle(void)
    static int frames = 0;
    static double tRot0 = -1.0, tRate0 = -1.0;
    double dt, t;
-   static u64 origTicks = U64_MAX;
+   static u64 origTicks = UINT64_MAX;
 
-   if (origTicks == U64_MAX)
+   if (origTicks == UINT64_MAX)
       origTicks = armGetSystemTick();
 
    u64 ticksElapsed = armGetSystemTick() - origTicks;
