@@ -21,24 +21,16 @@ int main(int argc, char **argv)
 
     printf("\x1b[1;1HPress PLUS to exit.");
 
+    hidScanInput(); // This needs to be used at least once before ringconCreate() since it uses hidGetControllerType() internally. This is only called here since ringconCreate() is called before the main-loop in this example.
+
     Result rc=0;
     RingCon ring={0};
-    RingConUserCal user_cal={0};
     bool ready=0;
     rc = ringconCreate(&ring, CONTROLLER_PLAYER_1); // Setup Ring-Con usage for the specified controller, if you want to use multiple controllers you can do so by calling this multiple times with multiple RingCon objects/controllers. The Ring-Con must be connected to the specified controller.
     printf(CONSOLE_ESC(2;1H)"ringconCreate(): 0x%x, 0x%x", rc, ringconGetErrorFlags(&ring)); // You can also use ringconGetErrorFlag().
+    ready = R_SUCCEEDED(rc);
 
-    if (R_SUCCEEDED(rc)) {
-        ringconGetUserCal(&ring, &user_cal);
-        if (user_cal.data_valid == RingConDataValid_Cal)
-            printf(CONSOLE_ESC(3;1H)"The user-cal is not calibrated."); // When this happens the calibration needs set with ringconUpdateUserCal(). This example won't impl doing so - Ring Fit Adventure can handle setting this.
-        else {
-            ready = true;
-            printf(CONSOLE_ESC(3;1H)"User-calibration: os_max = %d, hk_max = %d, zero = %d", user_cal.os_max, user_cal.hk_max, user_cal.zero);
-        }
-
-        // See ringcon.h for more ringcon funcs.
-    }
+    // For more ringcon functionality, see ringcon.h.
 
     // Main loop
     while(appletMainLoop())
@@ -58,10 +50,12 @@ int main(int argc, char **argv)
             s32 total_out=0;
             RingConPollingData polldata[0x1]; // For this example we'll just read the latest entry, however if you want the rest use 0x9.
             rc = ringconGetPollingData(&ring, polldata, 0x1, &total_out); // See libnx ringcon.h regarding ringconGetPollingData().
-            printf(CONSOLE_ESC(4;1H)"ringconGetPollingData(): 0x%x       (total_out=%d)\n", rc, total_out);
-            for (s32 polli=0; polli<total_out; polli++) printf("[%d]: data = %d\n", polli, polldata[polli].data);
+            printf(CONSOLE_ESC(4;1H)"ringconGetPollingData(): 0x%x\n", rc);
+            printf("total_out=%d\n", total_out);
+            for (s32 polli=0; polli<total_out; polli++) printf("[%d]: data =     %d\n", polli, polldata[polli].data);
 
-            // In an actual app you'd want to compare the above data with the user_cal fields.
+            // Normally(?) the UserCal is not calibrated. So instead, you have to have the user hold the Ring-Con in various positions, then use that as your app-specific calibration (with the above polling-data).
+            // Then afterwards in your app you'd compare your app-specific calibration with the polling-data.
         }
 
         // Update the console, sending a new frame to the display
