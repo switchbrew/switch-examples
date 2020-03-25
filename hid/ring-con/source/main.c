@@ -19,7 +19,7 @@ int main(int argc, char **argv)
     //   take a look at the graphics/opengl set of examples, which uses EGL instead.
     consoleInit(NULL);
 
-    printf("\x1b[1;1HPress PLUS to exit.");
+    printf(CONSOLE_ESC(1;1H)"Press PLUS to exit.");
 
     hidScanInput(); // This needs to be used at least once before ringconCreate() since it uses hidGetControllerType() internally. This is only called here since ringconCreate() is called before the main-loop in this example.
 
