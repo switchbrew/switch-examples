@@ -11,6 +11,7 @@ Result get_save(u64 *application_id, AccountUid *uid) {
     FsSaveDataInfoReader reader;
     s64 total_entries=0;
     FsSaveDataInfo info;
+    bool found=0;
 
     rc = fsOpenSaveDataInfoReader(&reader, FsSaveDataSpaceId_User);//See libnx fs.h.
     if (R_FAILED(rc)) {
@@ -26,13 +27,14 @@ Result get_save(u64 *application_id, AccountUid *uid) {
         if (info.save_data_type == FsSaveDataType_Account) {//Filter by FsSaveDataType_Account, however note that FsSaveDataSpaceId_User can have non-FsSaveDataType_Account.
             *application_id = info.application_id;
             *uid = info.uid;
-            return 0;
+            found = 1;
+            break;
         }
     }
 
     fsSaveDataInfoReaderClose(&reader);
 
-    if (R_SUCCEEDED(rc)) return MAKERESULT(Module_Libnx, LibnxError_NotFound);
+    if (R_SUCCEEDED(rc) && !found) return MAKERESULT(Module_Libnx, LibnxError_NotFound);
 
     return rc;
 }
