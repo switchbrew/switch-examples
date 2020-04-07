@@ -122,9 +122,8 @@ Result process_amiibo(u32 app_id) {
             app_area_size = common_info.application_area_size;
     }
 
-    u32 npad_id = 0;
     if (R_SUCCEEDED(rc)) {
-        rc = nfpOpenApplicationArea(&handle, app_id, &npad_id);
+        rc = nfpOpenApplicationArea(&handle, app_id);
 
         if (rc == 0x10073) // 2115-0128
             printf("This tag contains no application data.\n");
