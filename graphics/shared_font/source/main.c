@@ -132,7 +132,7 @@ void userAppInit(void)
 {
     Result rc;
 
-    rc = plInitialize();
+    rc = plInitialize(PlServiceType_User);
     if (R_FAILED(rc))
         fatalThrow(rc);
 
