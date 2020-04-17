@@ -18,7 +18,7 @@ extern "C" void userAppInit(void)
 
 #ifdef DEBUG_NXLINK
     socketInitializeDefault();
-    nxlink_sock = nxlinkStdio();
+    nxlink_sock = nxlinkStdioForDebug();
 #endif
 }
 
