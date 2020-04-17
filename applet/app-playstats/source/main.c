@@ -89,7 +89,7 @@ int main(int argc, char* argv[])
             total_out = 0;
 
             // Get PdmAppletEvents.
-            rc = pdmqryQueryAppletEvent(0, events, sizeof(events)/sizeof(PdmAppletEvent), &total_out);
+            rc = pdmqryQueryAppletEvent(false, 0, events, sizeof(events)/sizeof(PdmAppletEvent), &total_out);
             printf("pdmqryQueryAppletEvent(): 0x%x\n", rc);
             if (R_SUCCEEDED(rc)) {
                 printf("total_out: %d\n", total_out);
@@ -103,19 +103,19 @@ int main(int argc, char* argv[])
 
             // Get PdmPlayStatistics for the specified ApplicationId.
             PdmPlayStatistics playstats[1]={0};
-            rc = pdmqryQueryPlayStatisticsByApplicationId(application_ids[0], &playstats[0]);
+            rc = pdmqryQueryPlayStatisticsByApplicationId(application_ids[0], false, &playstats[0]);
             printf("pdmqryQueryPlayStatisticsByApplicationId(): 0x%x\n", rc);
             if (R_SUCCEEDED(rc)) printf("application_id = 0x%08lX, playtimeMinutes = %u, totalLaunches = %u\n", playstats[0].application_id, playstats[0].playtimeMinutes, playstats[0].totalLaunches);
 
             // Get PdmPlayStatistics for the specified ApplicationId and user.
-            rc = pdmqryQueryPlayStatisticsByApplicationIdAndUserAccountId(application_ids[0], preselected_uid, &playstats[0]);
+            rc = pdmqryQueryPlayStatisticsByApplicationIdAndUserAccountId(application_ids[0], preselected_uid, false, &playstats[0]);
             printf("pdmqryQueryPlayStatisticsByApplicationIdAndUserAccountId(): 0x%x\n", rc);
             if (R_SUCCEEDED(rc)) printf("application_id = 0x%08lX, playtimeMinutes = %u, totalLaunches = %u\n", playstats[0].application_id, playstats[0].playtimeMinutes, playstats[0].totalLaunches);
 
             // Get a listing of PdmLastPlayTime for the specified applications.
             PdmLastPlayTime playtimes[1]={0};
-            rc = pdmqryQueryLastPlayTime(playtimes, application_ids, 1, &total_out);
-            printf("pdmqryQueryLastPlayTime(): 0x%x, %d\n, ", rc, total_out);
+            rc = pdmqryQueryLastPlayTime(false, playtimes, application_ids, 1, &total_out);
+            printf("pdmqryQueryLastPlayTime(): 0x%x, %d\n", rc, total_out);
             if (R_SUCCEEDED(rc)) {
                 for (i=0; i<total_out; i++)
                     printf("%d: timestampUser = %lu\n", i, pdmPlayTimestampToPosix(playtimes[i].timestampUser));
@@ -127,7 +127,7 @@ int main(int argc, char* argv[])
             printf("pdmqryGetAvailablePlayEventRange(): 0x%x, 0x%x, 0x%x, 0x%x\n", rc, total_entries, start_entryindex, end_entryindex);
 
             // Get a listing of applications recently played by the specified user.
-            rc = pdmqryQueryRecentlyPlayedApplication(preselected_uid, application_ids, 1, &total_out);
+            rc = pdmqryQueryRecentlyPlayedApplication(preselected_uid, false, application_ids, 1, &total_out);
             printf("pdmqryQueryRecentlyPlayedApplication(): 0x%x, %d\n", rc, total_out);
             if (R_SUCCEEDED(rc)) {
                 for (i=0; i<total_out; i++)
