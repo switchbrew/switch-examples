@@ -3,6 +3,7 @@
 **   startup.cpp: Automatic initialization/deinitialization
 */
 #include "common.h"
+#include <unistd.h>
 
 //#define DEBUG_NXLINK
 
