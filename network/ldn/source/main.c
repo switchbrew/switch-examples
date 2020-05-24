@@ -171,6 +171,7 @@ int main(int argc, char **argv)
             }
         }
         accountProfileClose(&profile);
+        accountExit();
     }
 
     netconfig.local_communication_id = -1;
@@ -200,6 +201,7 @@ int main(int argc, char **argv)
         printf("Press A to create a network.\n");
         printf("Press B to connect to a network.\n");
         printf("Press X to leave a network.\n");
+        printf("Press the D-Pad buttons while on a network to send messages.\n");
     }
     printf("Press + to exit.\n");
 
@@ -290,7 +292,10 @@ int main(int argc, char **argv)
             else if (kDown & KEY_DDOWN) strncpy(tmpstr, "Button DDOWN pressed.", sizeof(tmpstr)-1);
 
             ssize_t ret = sendto(sockfd, tmpstr, strlen(tmpstr), 0, (struct sockaddr*) &serv_addr, sizeof(struct sockaddr_in));
-            printf("sendto(): %ld, %s\n", ret, strerror(errno));
+            int tmp = errno;
+            printf("sendto(): %ld", ret);
+            if (ret < 0) printf(", %s", strerror(tmp));
+            printf("\n");
         }
 
         if (R_SUCCEEDED(rc) && sockfd>=0) {
