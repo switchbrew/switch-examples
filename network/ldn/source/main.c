@@ -291,7 +291,7 @@ int main(int argc, char **argv)
             else if (kDown & KEY_DUP) strncpy(tmpstr, "Button DUP pressed.", sizeof(tmpstr)-1);
             else if (kDown & KEY_DDOWN) strncpy(tmpstr, "Button DDOWN pressed.", sizeof(tmpstr)-1);
 
-            ssize_t ret = sendto(sockfd, tmpstr, strlen(tmpstr), 0, (struct sockaddr*) &serv_addr, sizeof(struct sockaddr_in));
+            ssize_t ret = sendto(sockfd, tmpstr, sizeof(tmpstr), 0, (struct sockaddr*) &serv_addr, sizeof(struct sockaddr_in));
             int tmp = errno;
             printf("sendto(): %ld", ret);
             if (ret < 0) printf(", %s", strerror(tmp));
@@ -306,6 +306,7 @@ int main(int argc, char **argv)
             socklen_t fromlen = sizeof(struct sockaddr_in);
             ssize_t ret = recvfrom(sockfd, tmpstr, sizeof(tmpstr), MSG_DONTWAIT, (struct sockaddr*) &src_addr, &fromlen);
 
+            tmpstr[sizeof(tmpstr)-1] = 0;
             if (ret>0) printf("Received data: %s\n", tmpstr);
         }
 
