@@ -8,6 +8,8 @@
 
 // Sysmodules should not use applet*.
 u32 __nx_applet_type = AppletType_None;
+// Sysmodules will normally only want to use one FS session.
+u32 __nx_fs_num_sessions = 1;
 
 // Adjust size as needed.
 #define INNER_HEAP_SIZE 0x80000
