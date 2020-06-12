@@ -107,6 +107,7 @@ int main(int argc, char* argv[])
     swkbdInlineSetFinishedInitializeCallback(&kbdinline, finishinit_cb);
 
     // Launch the applet.
+    // If you want to display the image manually, you can also use swkbdInlineLaunch and swkbdInlineGetImageMemoryRequirement/swkbdInlineGetImage.
     if (R_SUCCEEDED(rc)) {
         rc = swkbdInlineLaunchForLibraryApplet(&kbdinline, SwkbdInlineMode_AppletDisplay, 0);
         printf("swkbdInlineLaunch(): 0x%x\n", rc);
