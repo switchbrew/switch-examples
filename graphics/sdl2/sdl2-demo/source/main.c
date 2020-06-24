@@ -73,7 +73,7 @@ int main(int argc, char** argv) {
     int exit_requested = 0;
     int trail = 0;
     int wait = 25;
-    
+
     SDL_Texture *switchlogo_tex = NULL, *sdllogo_tex =  NULL;
     SDL_Rect pos = { 0, 0, 0, 0 }, sdl_pos = { 0, 0, 0, 0 };
     Mix_Music *music = NULL;
