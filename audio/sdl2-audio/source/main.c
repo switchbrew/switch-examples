@@ -7,8 +7,8 @@
 #include <switch.h>
 
 // Include sdl2 headers
-#include <SDL2/SDL.h>
-#include <SDL2/SDL_mixer.h>
+#include <SDL.h>
+#include <SDL_mixer.h>
 
 // Main program entrypoint
 int main(int argc, char *argv[])
