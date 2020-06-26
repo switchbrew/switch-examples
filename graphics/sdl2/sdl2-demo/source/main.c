@@ -43,21 +43,19 @@
 #define SCREEN_W 1280
 #define SCREEN_H 720
 
-void render_text(SDL_Renderer *renderer, int x, int y, const char* text, TTF_Font *font, SDL_Rect *rect, SDL_Color *color) 
+SDL_Texture * render_text(SDL_Renderer *renderer, const char* text, TTF_Font *font, SDL_Color color, SDL_Rect *rect) 
 {
     SDL_Surface *surface;
     SDL_Texture *texture;
 
-    surface = TTF_RenderText_Solid(font, text, *color);
+    surface = TTF_RenderText_Solid(font, text, color);
     texture = SDL_CreateTextureFromSurface(renderer, surface);
-    rect->x = x;
-    rect->y = y;
     rect->w = surface->w;
     rect->h = surface->h;
 
     SDL_FreeSurface(surface);
-    SDL_RenderCopy(renderer, texture, NULL, rect);
-    SDL_DestroyTexture(texture);
+
+    return texture;
 }
 
 int rand_range(int min, int max){
@@ -74,12 +72,11 @@ int main(int argc, char** argv) {
     int trail = 0;
     int wait = 25;
 
-    SDL_Texture *switchlogo_tex = NULL, *sdllogo_tex =  NULL;
+    SDL_Texture *switchlogo_tex = NULL, *sdllogo_tex = NULL, *helloworld_tex = NULL;
     SDL_Rect pos = { 0, 0, 0, 0 }, sdl_pos = { 0, 0, 0, 0 };
     Mix_Music *music = NULL;
     Mix_Chunk *sound[4] = { NULL };
     SDL_Event event;
-    SDL_Rect rect;
 
     SDL_Color colors[] = {
         { 128, 128, 128, 0 }, // gray
@@ -132,6 +129,13 @@ int main(int argc, char** argv) {
     
     // load font from romfs
     TTF_Font* font = TTF_OpenFont("data/LeroyLetteringLightBeta01.ttf", 36);
+
+    // render text as texture
+    SDL_Rect helloworld_rect = { 0, SCREEN_H - 36, 0, 0 };
+    helloworld_tex = render_text(renderer, "Hello, world!", font, colors[1], &helloworld_rect);
+
+    // no need to keep the font loaded
+    TTF_CloseFont(font);
 
     SDL_InitSubSystem(SDL_INIT_AUDIO);
     Mix_AllocateChannels(5);
@@ -221,12 +225,23 @@ int main(int argc, char** argv) {
         }
         
         // put text on screen
-        render_text(renderer, 0, SCREEN_H - 36, "Hello, world!", font, &rect, &colors[1]);
+        if (helloworld_tex)
+            SDL_RenderCopy(renderer, helloworld_tex, NULL, &helloworld_rect);
 
         SDL_RenderPresent(renderer);
 
         SDL_Delay(wait);
     }
+
+    // clean up your textures when you are done with them
+    if (sdllogo_tex)
+        SDL_DestroyTexture(sdllogo_tex);
+
+    if (switchlogo_tex)
+        SDL_DestroyTexture(switchlogo_tex);
+
+    if (helloworld_tex)
+        SDL_DestroyTexture(helloworld_tex);
 
     // stop sounds and free loaded data
     Mix_HaltChannel(-1);
