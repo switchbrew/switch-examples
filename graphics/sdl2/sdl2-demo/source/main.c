@@ -234,7 +234,7 @@ int main(int argc, char** argv) {
     }
 
     // clean up your textures when you are done with them
-    if (sdllogo)
+    if (sdllogo_tex)
         SDL_DestroyTexture(sdllogo_tex);
 
     if (switchlogo_tex)
