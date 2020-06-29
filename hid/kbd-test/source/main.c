@@ -75,10 +75,6 @@ int main(int argc, char* argv[])
         // Clear the rest of the line
         printf("                     \n");
 
-
-
-
-
         // Update the console, sending a new frame to the display
         consoleUpdate(NULL);
     }
