@@ -159,7 +159,6 @@ int main(int argc, char** argv) {
 
             // use joystick
             if (event.type == SDL_JOYBUTTONDOWN) {
-                printf("%d\n",event.jbutton.button);
                 if (event.jbutton.button == JOY_UP)
                     if (wait > 0)
                         wait--;
