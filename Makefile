@@ -1,13 +1,17 @@
-MAKEFILES	:=	$(shell find . -mindepth 2 -name Makefile)
+TARGETS	:=	$(subst ./,,$(shell find . -mindepth 2 -name Makefile -printf "%h "))
 
 DATESTRING	:=	$(shell date +%Y)$(shell date +%m)$(shell date +%d)
 
-all:
-	@for i in $(MAKEFILES); do $(MAKE) -C `dirname $$i` || exit 1; done;
+all: $(TARGETS)
+
+.PHONY: $(TARGETS)
+
+$(TARGETS):
+	@$(MAKE) -C $@
 
 clean:
 	@rm -f *.bz2
-	@for i in $(MAKEFILES); do $(MAKE) -C `dirname $$i` clean || exit 1; done;
+	@for i in $(TARGETS); do $(MAKE) -C $$i clean || exit 1; done;
 
 dist: clean
 	@tar -cvjf switch-examples-$(DATESTRING).tar.bz2 *
