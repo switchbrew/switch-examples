@@ -17,7 +17,7 @@ void userAppInit(void)
 
     rc = irsInitialize();
     if (R_FAILED(rc))
-        fatalThrow(rc);
+        diagAbortWithResult(rc);
 }
 
 void userAppExit(void)

@@ -15,7 +15,7 @@ extern "C" void userAppInit(void)
 {
     Result res = romfsInit();
     if (R_FAILED(res))
-        fatalThrow(res);
+        diagAbortWithResult(res);
 
 #ifdef DEBUG_NXLINK
     socketInitializeDefault();

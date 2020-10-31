@@ -134,7 +134,7 @@ void userAppInit(void)
 
     rc = plInitialize(PlServiceType_User);
     if (R_FAILED(rc))
-        fatalThrow(rc);
+        diagAbortWithResult(rc);
 
     LanguageCode = getSystemLanguage();
 }
