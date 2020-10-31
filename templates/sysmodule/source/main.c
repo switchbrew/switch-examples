@@ -6,69 +6,90 @@
 // Include the main libnx system header, for Switch development
 #include <switch.h>
 
+// Size of the inner heap (adjust as necessary).
+#define INNER_HEAP_SIZE 0x80000
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 // Sysmodules should not use applet*.
 u32 __nx_applet_type = AppletType_None;
+
 // Sysmodules will normally only want to use one FS session.
 u32 __nx_fs_num_sessions = 1;
 
-// Adjust size as needed.
-#define INNER_HEAP_SIZE 0x80000
-size_t nx_inner_heap_size = INNER_HEAP_SIZE;
-char   nx_inner_heap[INNER_HEAP_SIZE];
-
+// Newlib heap configuration function (makes malloc/free work).
 void __libnx_initheap(void)
 {
-	void*  addr = nx_inner_heap;
-	size_t size = nx_inner_heap_size;
+    static u8 inner_heap[INNER_HEAP_SIZE];
+    extern void* fake_heap_start;
+    extern void* fake_heap_end;
 
-	// Newlib
-	extern char* fake_heap_start;
-	extern char* fake_heap_end;
-
-	fake_heap_start = (char*)addr;
-	fake_heap_end   = (char*)addr + size;
+    // Configure the newlib heap.
+    fake_heap_start = inner_heap;
+    fake_heap_end   = inner_heap + sizeof(inner_heap);
 }
 
-// Init/exit services, update as needed.
-void __attribute__((weak)) __appInit(void)
+// Service initialization.
+void __appInit(void)
 {
     Result rc;
 
-    // Initialize default services.
+    // Open a service manager session.
     rc = smInitialize();
     if (R_FAILED(rc))
         diagAbortWithResult(MAKERESULT(Module_Libnx, LibnxError_InitFail_SM));
+
+    // Retrieve the current version of Horizon OS.
+    rc = setsysInitialize();
+    if (R_SUCCEEDED(rc)) {
+        SetSysFirmwareVersion fw;
+        rc = setsysGetFirmwareVersion(&fw);
+        if (R_SUCCEEDED(rc))
+            hosversionSet(MAKEHOSVERSION(fw.major, fw.minor, fw.micro));
+        setsysExit();
+    }
 
     // Enable this if you want to use HID.
     /*rc = hidInitialize();
     if (R_FAILED(rc))
         diagAbortWithResult(MAKERESULT(Module_Libnx, LibnxError_InitFail_HID));*/
 
-    //Enable this if you want to use time.
+    // Enable this if you want to use time.
     /*rc = timeInitialize();
     if (R_FAILED(rc))
         diagAbortWithResult(MAKERESULT(Module_Libnx, LibnxError_InitFail_Time));
 
     __libnx_init_time();*/
 
+    // Disable this if you don't want to use the filesystem.
     rc = fsInitialize();
     if (R_FAILED(rc))
         diagAbortWithResult(MAKERESULT(Module_Libnx, LibnxError_InitFail_FS));
 
+    // Disable this if you don't want to use the SD card filesystem.
     fsdevMountSdmc();
-}
 
-void __attribute__((weak)) userAppExit(void);
+    // Add other services you want to use here.
 
-void __attribute__((weak)) __appExit(void)
-{
-    // Cleanup default services.
-    fsdevUnmountAll();
-    fsExit();
-    //timeExit();//Enable this if you want to use time.
-    //hidExit();// Enable this if you want to use HID.
+    // Close the service manager session.
     smExit();
 }
+
+// Service deinitialization.
+void __appExit(void)
+{
+    // Close extra services you added to __appInit here.
+    fsdevUnmountAll(); // Disable this if you don't want to use the SD card filesystem.
+    fsExit(); // Disable this if you don't want to use the filesystem.
+    //timeExit(); // Enable this if you want to use time.
+    //hidExit(); // Enable this if you want to use HID.
+}
+
+#ifdef __cplusplus
+}
+#endif
 
 // Main program entrypoint
 int main(int argc, char* argv[])
