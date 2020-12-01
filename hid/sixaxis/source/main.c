@@ -9,11 +9,18 @@ int main(int argc, char **argv)
 {
     consoleInit(NULL);
 
+    // Configure our supported input layout: a single player with standard controller styles
+    padConfigureInput(1, HidNpadStyleSet_NpadStandard);
+
+    // Initialize the default gamepad (which reads handheld mode inputs as well as the first connected controller)
+    PadState pad;
+    padInitializeDefault(&pad);
+
     // It's necessary to initialize these separately as they all have different handle values
-    u32 handles[4];
-    hidGetSixAxisSensorHandles(&handles[0], 2, CONTROLLER_PLAYER_1, TYPE_JOYCON_PAIR);
-    hidGetSixAxisSensorHandles(&handles[2], 1, CONTROLLER_PLAYER_1, TYPE_PROCONTROLLER);
-    hidGetSixAxisSensorHandles(&handles[3], 1, CONTROLLER_HANDHELD, TYPE_HANDHELD);
+    HidSixAxisSensorHandle handles[4];
+    hidGetSixAxisSensorHandles(&handles[0], 1, HidNpadIdType_Handheld, HidNpadStyleTag_NpadHandheld);
+    hidGetSixAxisSensorHandles(&handles[1], 1, HidNpadIdType_No1,      HidNpadStyleTag_NpadFullKey);
+    hidGetSixAxisSensorHandles(&handles[2], 2, HidNpadIdType_No1,      HidNpadStyleTag_NpadJoyDual);
     hidStartSixAxisSensor(handles[0]);
     hidStartSixAxisSensor(handles[1]);
     hidStartSixAxisSensor(handles[2]);
@@ -25,31 +32,43 @@ int main(int argc, char **argv)
     // Main loop
     while(appletMainLoop())
     {
-        //Scan all the inputs. This should be done once for each frame
-        hidScanInput();
+        // Scan the gamepad. This should be done once for each frame
+        padUpdate(&pad);
 
-        //hidKeysDown returns information about which buttons have been just pressed (and they weren't in the previous frame)
-        u64 kDown = hidKeysDown(CONTROLLER_P1_AUTO);
+        // padGetButtonsDown returns the set of buttons that have been
+        // newly pressed in this frame compared to the previous one
+        u64 kDown = padGetButtonsDown(&pad);
 
-        if (kDown & KEY_PLUS) break; // break in order to return to hbmenu
+        if (kDown & HidNpadButton_Plus) break; // break in order to return to hbmenu
 
-        SixAxisSensorValues sixaxis;
-        // You can read back up to 17 successive values at once
-        hidSixAxisSensorValuesRead(&sixaxis, CONTROLLER_P1_AUTO, 1);
+        // Read from the correct sixaxis handle depending on the current input style
+        HidSixAxisSensorState sixaxis = {0};
+        u64 style_set = padGetStyleSet(&pad);
+        if (style_set & HidNpadStyleTag_NpadHandheld)
+            hidGetSixAxisSensorStates(handles[0], &sixaxis, 1);
+        else if (style_set & HidNpadStyleTag_NpadFullKey)
+            hidGetSixAxisSensorStates(handles[1], &sixaxis, 1);
+        else if (style_set & HidNpadStyleTag_NpadJoyDual) {
+            // For JoyDual, read from either the Left or Right Joy-Con depending on which is/are connected
+            u64 attrib = padGetAttributes(&pad);
+            if (attrib & HidNpadAttribute_IsLeftConnected)
+                hidGetSixAxisSensorStates(handles[2], &sixaxis, 1);
+            else if (attrib & HidNpadAttribute_IsRightConnected)
+                hidGetSixAxisSensorStates(handles[3], &sixaxis, 1);
+        }
 
         printf("\x1b[3;1H");
 
-        printf("Accelerometer:    x=% .4f, y=% .4f, z=% .4f\n", sixaxis.accelerometer.x, sixaxis.accelerometer.y, sixaxis.accelerometer.z);
-        printf("Gyroscope:        x=% .4f, y=% .4f, z=% .4f\n", sixaxis.gyroscope.x, sixaxis.gyroscope.y, sixaxis.gyroscope.z);
-        // It's currently unknown what this corresponds to other than some rotational value
-        printf("Unknown rotation: x=% .4f, y=% .4f, z=% .4f\n", sixaxis.unk.x, sixaxis.unk.y, sixaxis.unk.z);
-        printf("Orientation matrix:\n"
+        printf("Acceleration:     x=% .4f, y=% .4f, z=% .4f\n", sixaxis.acceleration.x, sixaxis.acceleration.y, sixaxis.acceleration.z);
+        printf("Angular velocity: x=% .4f, y=% .4f, z=% .4f\n", sixaxis.angular_velocity.x, sixaxis.angular_velocity.y, sixaxis.angular_velocity.z);
+        printf("Angle:            x=% .4f, y=% .4f, z=% .4f\n", sixaxis.angle.x, sixaxis.angle.y, sixaxis.angle.z);
+        printf("Direction matrix:\n"
                "                  [ % .4f,   % .4f,   % .4f ]\n"
                "                  [ % .4f,   % .4f,   % .4f ]\n"
                "                  [ % .4f,   % .4f,   % .4f ]\n",
-            sixaxis.orientation[0].x, sixaxis.orientation[0].y, sixaxis.orientation[0].z,
-            sixaxis.orientation[1].x, sixaxis.orientation[1].y, sixaxis.orientation[1].z,
-            sixaxis.orientation[2].x, sixaxis.orientation[2].y, sixaxis.orientation[2].z);
+            sixaxis.direction.direction[0][0], sixaxis.direction.direction[1][0], sixaxis.direction.direction[2][0],
+            sixaxis.direction.direction[0][1], sixaxis.direction.direction[1][1], sixaxis.direction.direction[2][1],
+            sixaxis.direction.direction[0][2], sixaxis.direction.direction[1][2], sixaxis.direction.direction[2][2]);
 
         consoleUpdate(NULL);
     }
@@ -62,4 +81,3 @@ int main(int argc, char **argv)
     consoleExit(NULL);
     return 0;
 }
-
