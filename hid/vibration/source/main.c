@@ -7,7 +7,7 @@
 
 int main(int argc, char **argv)
 {
-    u32 VibrationDeviceHandles[2][2];
+    HidVibrationDeviceHandle VibrationDeviceHandles[2][2];
     Result rc = 0, rc2 = 0;
     u32 target_device=0;
 
@@ -17,14 +17,21 @@ int main(int argc, char **argv)
 
     consoleInit(NULL);
 
+    // Configure our supported input layout: a single player with standard controller styles
+    padConfigureInput(1, HidNpadStyleSet_NpadStandard);
+
+    // Initialize the default gamepad (which reads handheld mode inputs as well as the first connected controller)
+    PadState pad;
+    padInitializeDefault(&pad);
+
     printf("Press PLUS to exit.\n");
 
     //Two VibrationDeviceHandles are returned: first one for left-joycon, second one for right-joycon.
     //Change the total_handles param to 1, and update the hidSendVibrationValues calls, if you only want 1 VibrationDeviceHandle.
-    rc = hidInitializeVibrationDevices(VibrationDeviceHandles[0], 2, CONTROLLER_HANDHELD, TYPE_HANDHELD);
+    rc = hidInitializeVibrationDevices(VibrationDeviceHandles[0], 2, HidNpadIdType_Handheld, HidNpadStyleTag_NpadHandheld);
 
-    //Setup VibrationDeviceHandles for CONTROLLER_PLAYER_1 too, since we want to support both CONTROLLER_HANDHELD and CONTROLLER_PLAYER_1.
-    if (R_SUCCEEDED(rc)) rc = hidInitializeVibrationDevices(VibrationDeviceHandles[1], 2, CONTROLLER_PLAYER_1, TYPE_JOYCON_PAIR);
+    //Setup VibrationDeviceHandles for HidNpadIdType_No1 too, since we want to support both HidNpadIdType_Handheld and HidNpadIdType_No1.
+    if (R_SUCCEEDED(rc)) rc = hidInitializeVibrationDevices(VibrationDeviceHandles[1], 2, HidNpadIdType_No1, HidNpadStyleTag_NpadJoyDual);
     printf("hidInitializeVibrationDevices() returned: 0x%x\n", rc);
 
     if (R_SUCCEEDED(rc)) printf("Hold R to vibrate, and press A/B/X/Y while holding R to adjust values.\n");
@@ -44,22 +51,19 @@ int main(int argc, char **argv)
     // Main loop
     while(appletMainLoop())
     {
-        //Scan all the inputs. This should be done once for each frame
-        hidScanInput();
+        // Scan the gamepad. This should be done once for each frame
+        padUpdate(&pad);
 
-        //hidKeysDown returns information about which buttons have been just pressed (and they weren't in the previous frame)
-        u64 kDown = hidKeysDown(CONTROLLER_P1_AUTO);
-        u64 kHeld = hidKeysHeld(CONTROLLER_P1_AUTO);
-        u64 kUp = hidKeysUp(CONTROLLER_P1_AUTO);
+        u64 kDown = padGetButtonsDown(&pad);
+        u64 kHeld = padGetButtons(&pad);
+        u64 kUp = padGetButtonsUp(&pad);
 
-        if (kDown & KEY_PLUS) break; // break in order to return to hbmenu
+        if (kDown & HidNpadButton_Plus) break; // break in order to return to hbmenu
 
         //Select which devices to vibrate.
-        target_device = 0;
-        if (!hidGetHandheldMode())
-            target_device = 1;
+        target_device = padIsHandheld(&pad) ? 0 : 1;
 
-        if (R_SUCCEEDED(rc) && (kHeld & KEY_R))
+        if (R_SUCCEEDED(rc) && (kHeld & HidNpadButton_R))
         {
             //Calling hidSendVibrationValue/hidSendVibrationValues is really only needed when sending new VibrationValue(s).
             //If you just want to vibrate 1 device, you can also use hidSendVibrationValue.
@@ -75,7 +79,7 @@ int main(int argc, char **argv)
             if (kDown & KEY_X) VibrationValue.amp_high  += 0.1f;
             if (kDown & KEY_Y) VibrationValue.freq_high += 12.0f;
         }
-        else if(kUp & KEY_R)//Stop vibration for all devices.
+        else if(kUp & HidNpadButton_R)//Stop vibration for all devices.
         {
             memcpy(&VibrationValues[0], &VibrationValue_stop, sizeof(HidVibrationValue));
             memcpy(&VibrationValues[1], &VibrationValue_stop, sizeof(HidVibrationValue));
