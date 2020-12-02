@@ -209,12 +209,19 @@ int main(int argc, char* argv[])
     romfsInit();
     graphicsInitialize();
 
+    // Configure our supported input layout: a single player with standard controller styles
+    padConfigureInput(1, HidNpadStyleSet_NpadStandard);
+
+    // Initialize the default gamepad (which reads handheld mode inputs as well as the first connected controller)
+    PadState pad;
+    padInitializeDefault(&pad);
+
     while (appletMainLoop())
     {
-        hidScanInput();
+        padUpdate(&pad);
 
-        u64 kDown = hidKeysDown(CONTROLLER_P1_AUTO);
-        if (kDown & KEY_PLUS)
+        u64 kDown = padGetButtonsDown(&pad);
+        if (kDown & HidNpadButton_Plus)
             break; // break in order to return to hbmenu
 
         graphicsUpdate();

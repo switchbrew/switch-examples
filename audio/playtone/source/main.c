@@ -38,6 +38,13 @@ int main(int argc, char **argv)
     // Initialize console. Using NULL as the second argument tells the console library to use the internal console structure as current one.
     consoleInit(NULL);
 
+    // Configure our supported input layout: a single player with standard controller styles
+    padConfigureInput(1, HidNpadStyleSet_NpadStandard);
+
+    // Initialize the default gamepad (which reads handheld mode inputs as well as the first connected controller)
+    PadState pad;
+    padInitializeDefault(&pad);
+
     AudioOutBuffer audout_buf;
     AudioOutBuffer *audout_released_buf;
 
@@ -82,57 +89,57 @@ int main(int argc, char **argv)
 
     while (appletMainLoop())
     {
-        //Scan all the inputs. This should be done once for each frame
-        hidScanInput();
+        // Scan the gamepad. This should be done once for each frame
+        padUpdate(&pad);
 
-        //hidKeysDown returns information about which buttons have been just pressed (and they weren't in the previous frame)
-        u64 kDown = hidKeysDown(CONTROLLER_P1_AUTO);
+        // padGetButtonsDown returns the set of buttons that have been newly pressed in this frame compared to the previous one
+        u64 kDown = padGetButtonsDown(&pad);
 
-        if (kDown & KEY_PLUS) break; // break in order to return to hbmenu
+        if (kDown & HidNpadButton_Plus) break; // break in order to return to hbmenu
 
-        if (kDown & KEY_A)
+        if (kDown & HidNpadButton_A)
         {
             fill_audio_buffer(out_buf_data, 0, data_size, notefreq[0]);
             play_tone = true;
         }
 
-        if (kDown & KEY_B)
+        if (kDown & HidNpadButton_B)
         {
             fill_audio_buffer(out_buf_data, 0, data_size, notefreq[1]);
             play_tone = true;
         }
 
-        if (kDown & KEY_Y)
+        if (kDown & HidNpadButton_Y)
         {
             fill_audio_buffer(out_buf_data, 0, data_size, notefreq[2]);
             play_tone = true;
         }
 
-        if (kDown & KEY_X)
+        if (kDown & HidNpadButton_X)
         {
             fill_audio_buffer(out_buf_data, 0, data_size, notefreq[3]);
             play_tone = true;
         }
 
-        if (kDown & KEY_DLEFT)
+        if (kDown & HidNpadButton_Left)
         {
             fill_audio_buffer(out_buf_data, 0, data_size, notefreq[4]);
             play_tone = true;
         }
 
-        if (kDown & KEY_DUP)
+        if (kDown & HidNpadButton_Up)
         {
             fill_audio_buffer(out_buf_data, 0, data_size, notefreq[5]);
             play_tone = true;
         }
 
-        if (kDown & KEY_DRIGHT)
+        if (kDown & HidNpadButton_Right)
         {
             fill_audio_buffer(out_buf_data, 0, data_size, notefreq[6]);
             play_tone = true;
         }
 
-        if (kDown & KEY_DDOWN)
+        if (kDown & HidNpadButton_Down)
         {
             fill_audio_buffer(out_buf_data, 0, data_size, notefreq[7]);
             play_tone = true;
@@ -150,13 +157,13 @@ int main(int argc, char **argv)
             play_tone = true;
         }
 
-        if (kDown & KEY_ZL)
+        if (kDown & HidNpadButton_ZL)
         {
             fill_audio_buffer(out_buf_data, 0, data_size, notefreq[10]);
             play_tone = true;
         }
 
-        if (kDown & KEY_ZR)
+        if (kDown & HidNpadButton_ZR)
         {
             fill_audio_buffer(out_buf_data, 0, data_size, notefreq[11]);
             play_tone = true;

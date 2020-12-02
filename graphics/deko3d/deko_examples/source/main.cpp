@@ -46,6 +46,8 @@ class CMainMenu final : public CApplication
     static constexpr unsigned EntriesPerScreen = 39;
     static constexpr unsigned EntryPageLength = 10;
 
+    PadState pad;
+
     int screenPos;
     int selectPos;
 
@@ -69,6 +71,10 @@ class CMainMenu final : public CApplication
     {
         consoleInit(NULL);
         renderMenu();
+
+        padConfigureInput(1, HidNpadStyleSet_NpadStandard);
+        padInitializeDefault(&pad);
+        padUpdate(&pad);
     }
 
     ~CMainMenu()
@@ -79,23 +85,23 @@ class CMainMenu final : public CApplication
     bool onFrame(u64 ns) override
     {
         int oldPos = selectPos;
-        hidScanInput();
+        padUpdate(&pad);
 
-        u64 kDown = hidKeysDown(CONTROLLER_P1_AUTO);
-        if (kDown & KEY_PLUS)
+        u64 kDown = padGetButtonsDown(&pad);
+        if (kDown & HidNpadButton_Plus)
         {
             selectPos = -1;
             return false;
         }
-        if (kDown & KEY_A)
+        if (kDown & HidNpadButton_A)
             return false;
-        if (kDown & KEY_UP)
+        if (kDown & HidNpadButton_AnyUp)
             selectPos -= 1;
-        if (kDown & KEY_DOWN)
+        if (kDown & HidNpadButton_AnyDown)
             selectPos += 1;
-        if (kDown & KEY_LEFT)
+        if (kDown & HidNpadButton_AnyLeft)
             selectPos -= EntryPageLength;
-        if (kDown & KEY_RIGHT)
+        if (kDown & HidNpadButton_AnyRight)
             selectPos += EntryPageLength;
 
         if (selectPos < 0)

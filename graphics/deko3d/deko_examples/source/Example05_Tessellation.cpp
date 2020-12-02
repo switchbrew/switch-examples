@@ -52,6 +52,8 @@ class CExample05 final : public CApplication
     static constexpr uint32_t FramebufferHeight = 720;
     static constexpr unsigned StaticCmdSize = 0x10000;
 
+    PadState pad;
+
     dk::UniqueDevice device;
     dk::UniqueQueue queue;
 
@@ -106,6 +108,10 @@ public:
 
         // Create the framebuffer resources
         createFramebufferResources();
+
+        // Initialize gamepad
+        padConfigureInput(1, HidNpadStyleSet_NpadStandard);
+        padInitializeDefault(&pad);
     }
 
     ~CExample05()
@@ -236,9 +242,9 @@ public:
 
     bool onFrame(u64 ns) override
     {
-        hidScanInput();
-        u64 kDown = hidKeysDown(CONTROLLER_P1_AUTO);
-        if (kDown & KEY_PLUS)
+        padUpdate(&pad);
+        u64 kDown = padGetButtonsDown(&pad);
+        if (kDown & HidNpadButton_Plus)
             return false;
 
         render();

@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -855,13 +855,20 @@ int main(int argc, char* argv[])
     gears_init();
     gears_reshape(1280, 720);
 
+    // Configure our supported input layout: a single player with standard controller styles
+    padConfigureInput(1, HidNpadStyleSet_NpadStandard);
+
+    // Initialize the default gamepad (which reads handheld mode inputs as well as the first connected controller)
+    PadState pad;
+    padInitializeDefault(&pad);
+
     // Main graphics loop
     while (appletMainLoop())
     {
         // Get and process input
-        hidScanInput();
-        u32 kDown = hidKeysDown(CONTROLLER_P1_AUTO);
-        if (kDown & KEY_PLUS)
+        padUpdate(&pad);
+        u32 kDown = padGetButtonsDown(&pad);
+        if (kDown & HidNpadButton_Plus)
             break;
 
         // Render stuff!

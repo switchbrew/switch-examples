@@ -13,6 +13,13 @@ int main(void)
 {
     consoleInit(NULL);
 
+    // Configure our supported input layout: a single player with standard controller styles
+    padConfigureInput(1, HidNpadStyleSet_NpadStandard);
+
+    // Initialize the default gamepad (which reads handheld mode inputs as well as the first connected controller)
+    PadState pad;
+    padInitializeDefault(&pad);
+
     printf("Simple audren demonstration program\n");
 
     static const AudioRendererConfig arConfig =
@@ -57,7 +64,7 @@ int main(void)
             audrvMemPoolAttach(&drv, mpid);
 
             static const u8 sink_channels[] = { 0, 1 };
-            int sink = audrvDeviceSinkAdd(&drv, AUDREN_DEFAULT_DEVICE_NAME, 2, sink_channels);
+            /*int sink =*/ audrvDeviceSinkAdd(&drv, AUDREN_DEFAULT_DEVICE_NAME, 2, sink_channels);
 
             res = audrvUpdate(&drv);
             printf("audrvUpdate: %" PRIx32 "\n", res);
@@ -77,16 +84,16 @@ int main(void)
     // Main loop
     while (appletMainLoop())
     {
-        hidScanInput();
+        padUpdate(&pad);
 
-        u64 kDown = hidKeysDown(CONTROLLER_P1_AUTO);
+        u64 kDown = padGetButtonsDown(&pad);
 
-        if (kDown & KEY_PLUS)
+        if (kDown & HidNpadButton_Plus)
             break;
 
         if (initedDriver)
         {
-            if (kDown & KEY_A)
+            if (kDown & HidNpadButton_A)
             {
                 audrvVoiceStop(&drv, 0);
                 audrvVoiceAddWaveBuf(&drv, 0, &wavebuf);

@@ -112,6 +112,13 @@ int main(int argc, char **argv)
     //   take a look at the graphics/opengl set of examples, which uses EGL instead.
     consoleInit(NULL);
 
+    // Configure our supported input layout: a single player with standard controller styles
+    padConfigureInput(1, HidNpadStyleSet_NpadStandard);
+
+    // Initialize the default gamepad (which reads handheld mode inputs as well as the first connected controller)
+    PadState pad;
+    padInitializeDefault(&pad);
+
     // Initialise sockets
     socketInitializeDefault();
 
@@ -208,23 +215,23 @@ int main(int argc, char **argv)
     // Main loop
     while(appletMainLoop())
     {
-        //Scan all the inputs. This should be done once for each frame
-        hidScanInput();
+        // Scan the gamepad. This should be done once for each frame
+        padUpdate(&pad);
 
-        //hidKeysDown returns information about which buttons have been just pressed (and they weren't in the previous frame)
-        u32 kDown = hidKeysDown(CONTROLLER_P1_AUTO);
+        // padGetButtonsDown returns the set of buttons that have been newly pressed in this frame compared to the previous one
+        u32 kDown = padGetButtonsDown(&pad);
 
-        if (kDown & KEY_PLUS) break; // break in order to return to hbmenu
+        if (kDown & HidNpadButton_Plus) break; // break in order to return to hbmenu
 
-        if (R_SUCCEEDED(rc) && (kDown & (KEY_A|KEY_B))) {
+        if (R_SUCCEEDED(rc) && (kDown & (HidNpadButton_A|HidNpadButton_B))) {
              Result rc2 = ldnGetState(&state);
              printf("ldnGetState(): 0x%x, %d\n", rc, state);
              if (R_SUCCEEDED(rc2) && state==LdnState_Initialized) {
-                 if (kDown & KEY_A) {
+                 if (kDown & HidNpadButton_A) {
                      rc2 = create_network(&sec_config, &user_config, &netconfig, advert, sizeof(advert));
                      printf("create_network(): 0x%x\n", rc2);
                  }
-                 if (kDown & KEY_B) {
+                 if (kDown & HidNpadButton_B) {
                      rc2 = connect_network(&filter, &sec_config, &user_config, advert, sizeof(advert));
                      printf("connect_network(): 0x%x\n", rc2);
                  }
@@ -274,7 +281,7 @@ int main(int argc, char **argv)
              }
         }
 
-        if (R_SUCCEEDED(rc) && (kDown & KEY_X)) {
+        if (R_SUCCEEDED(rc) && (kDown & HidNpadButton_X)) {
             if (sockfd >= 0) {
                 close(sockfd);
                 sockfd = -1;
@@ -282,14 +289,14 @@ int main(int argc, char **argv)
             leave_network();
         }
 
-        if (R_SUCCEEDED(rc) && sockfd>=0 && (kDown & (KEY_DLEFT|KEY_DRIGHT|KEY_DUP|KEY_DDOWN))) {
+        if (R_SUCCEEDED(rc) && sockfd>=0 && (kDown & (HidNpadButton_Left|HidNpadButton_Right|HidNpadButton_Up|HidNpadButton_Down))) {
             char tmpstr[32];
             memset(tmpstr, 0, sizeof(tmpstr));
 
-            if (kDown & KEY_DLEFT) strncpy(tmpstr, "Button DLEFT pressed.", sizeof(tmpstr)-1);
-            else if (kDown & KEY_DRIGHT) strncpy(tmpstr, "Button DRIGHT pressed.", sizeof(tmpstr)-1);
-            else if (kDown & KEY_DUP) strncpy(tmpstr, "Button DUP pressed.", sizeof(tmpstr)-1);
-            else if (kDown & KEY_DDOWN) strncpy(tmpstr, "Button DDOWN pressed.", sizeof(tmpstr)-1);
+            if (kDown & HidNpadButton_Left) strncpy(tmpstr, "Button DLEFT pressed.", sizeof(tmpstr)-1);
+            else if (kDown & HidNpadButton_Right) strncpy(tmpstr, "Button DRIGHT pressed.", sizeof(tmpstr)-1);
+            else if (kDown & HidNpadButton_Up) strncpy(tmpstr, "Button DUP pressed.", sizeof(tmpstr)-1);
+            else if (kDown & HidNpadButton_Down) strncpy(tmpstr, "Button DDOWN pressed.", sizeof(tmpstr)-1);
 
             ssize_t ret = sendto(sockfd, tmpstr, sizeof(tmpstr), 0, (struct sockaddr*) &serv_addr, sizeof(struct sockaddr_in));
             int tmp = errno;

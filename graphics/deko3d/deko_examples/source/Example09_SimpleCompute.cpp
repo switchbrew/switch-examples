@@ -69,6 +69,8 @@ class CExample09 final : public CApplication
     static constexpr unsigned DynamicCmdSize = 0x10000;
     static constexpr unsigned NumVertices = 256;
 
+    PadState pad;
+
     dk::UniqueDevice device;
     dk::UniqueQueue queue;
 
@@ -138,6 +140,10 @@ public:
 
         // Create the framebuffer resources
         createFramebufferResources();
+
+        // Initialize gamepad
+        padConfigureInput(1, HidNpadStyleSet_NpadStandard);
+        padInitializeDefault(&pad);
     }
 
     ~CExample09()
@@ -291,9 +297,9 @@ public:
 
     bool onFrame(u64 ns) override
     {
-        hidScanInput();
-        u64 kDown = hidKeysDown(CONTROLLER_P1_AUTO);
-        if (kDown & KEY_PLUS)
+        padUpdate(&pad);
+        u64 kDown = padGetButtonsDown(&pad);
+        if (kDown & HidNpadButton_Plus)
             return false;
 
         float time = ns / 1000000000.0; // double precision division; followed by implicit cast to single precision

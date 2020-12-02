@@ -1,4 +1,4 @@
-﻿#include <stdio.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <switch.h>
@@ -430,16 +430,16 @@ static void sceneUpdate(u32 kHeld)
     float deltaTime = curTime - s_updTime;
     s_updTime = curTime;
 
-    if (kHeld & KEY_LEFT)
+    if (kHeld & HidNpadButton_AnyLeft)
         s_cameraAngle = fract(s_cameraAngle - deltaTime/4);
-    else if (kHeld & KEY_RIGHT)
+    else if (kHeld & HidNpadButton_AnyRight)
         s_cameraAngle = fract(s_cameraAngle + deltaTime/4);
-    if (kHeld & (KEY_UP|KEY_DOWN))
+    if (kHeld & (HidNpadButton_AnyUp|HidNpadButton_AnyDown))
     {
         glm::vec3 front = deltaTime * glm::rotate(glm::vec3{0.0f, 0.0f, -1.0f}, s_cameraAngle * TAU, glm::vec3{0.0f, -1.0f, 0.0f});
-        if (kHeld & KEY_UP)
+        if (kHeld & HidNpadButton_AnyUp)
             s_cameraPos += front;
-        else if (kHeld & KEY_DOWN)
+        else if (kHeld & HidNpadButton_AnyDown)
             s_cameraPos -= front;
     }
 
@@ -525,17 +525,24 @@ int main(int argc, char* argv[])
     // Initialize our scene
     sceneInit();
 
+    // Configure our supported input layout: a single player with standard controller styles
+    padConfigureInput(1, HidNpadStyleSet_NpadStandard);
+
+    // Initialize the default gamepad (which reads handheld mode inputs as well as the first connected controller)
+    PadState pad;
+    padInitializeDefault(&pad);
+
     // Main graphics loop
     while (appletMainLoop())
     {
         // Get and process input
-        hidScanInput();
-        u32 kDown = hidKeysDown(CONTROLLER_P1_AUTO);
-        u32 kHeld = hidKeysHeld(CONTROLLER_P1_AUTO);
-        if (kDown & KEY_PLUS)
+        padUpdate(&pad);
+        u32 kDown = padGetButtonsDown(&pad);
+        u32 kHeld = padGetButtons(&pad);
+        if (kDown & HidNpadButton_Plus)
             break;
 
-        bool shouldHalveResolution = !!(kHeld & KEY_A);
+        bool shouldHalveResolution = !!(kHeld & HidNpadButton_A);
 
         // Configure the resolution used to render the scene, which
         // will be different in handheld mode/docked mode.

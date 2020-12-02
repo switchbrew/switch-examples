@@ -50,6 +50,13 @@ int main(int argc, char **argv)
 {
     consoleInit(NULL);
 
+    // Configure our supported input layout: a single player with standard controller styles
+    padConfigureInput(1, HidNpadStyleSet_NpadStandard);
+
+    // Initialize the default gamepad (which reads handheld mode inputs as well as the first connected controller)
+    PadState pad;
+    padInitializeDefault(&pad);
+
     mutexInit(&g_PrintMutex);
     utimerCreate(&g_Timer, 2000000000, TimerType_Repeating); // 2s
     utimerCreate(&g_FastTimer, 1000000000, TimerType_Repeating); // 1s
@@ -93,11 +100,11 @@ int main(int argc, char **argv)
 
     while(appletMainLoop())
     {
-        hidScanInput();
+        padUpdate(&pad);
 
-        u32 kDown = hidKeysDown(CONTROLLER_P1_AUTO);
+        u32 kDown = padGetButtonsDown(&pad);
 
-        if (kDown & KEY_PLUS)
+        if (kDown & HidNpadButton_Plus)
             break;
 
         consoleUpdate(NULL);

@@ -9,14 +9,16 @@
 
 // See also libnx nfc.h.
 
+static PadState pad;
+
 // Indefinitely wait for an event to be signaled
 // Break when + is pressed, or if the application should quit (in this case, return value will be non-zero)
 Result eventWaitLoop(Event *event) {
     Result rc = 1;
     while (appletMainLoop()) {
         rc = eventWait(event, 0);
-        hidScanInput();
-        if (R_SUCCEEDED(rc) || (hidKeysDown(CONTROLLER_P1_AUTO) & KEY_PLUS))
+        padUpdate(&pad);
+        if (R_SUCCEEDED(rc) || (padGetButtonsDown(&pad) & HidNpadButton_Plus))
             break;
         consoleUpdate(NULL);
     }
@@ -181,6 +183,12 @@ int main(int argc, char* argv[])
     //   take a look at the graphics/opengl set of examples, which uses EGL instead.
     consoleInit(NULL);
 
+    // Configure our supported input layout: a single player with standard controller styles
+    padConfigureInput(1, HidNpadStyleSet_NpadStandard);
+
+    // Initialize the default gamepad (which reads handheld mode inputs as well as the first connected controller)
+    padInitializeDefault(&pad);
+
     printf("NFC example program.\n");
     printf("Scan an amiibo tag to display information about it.\n\n");
     consoleUpdate(NULL);
@@ -223,12 +231,12 @@ int main(int argc, char* argv[])
 
     // Main loop
     while (appletMainLoop()) {
-        // Scan all the inputs. This should be done once for each frame
-        hidScanInput();
+        // Scan the gamepad. This should be done once for each frame
+        padUpdate(&pad);
 
-        // hidKeysDown returns information about which buttons have been
-        // just pressed in this frame compared to the previous one
-        if (hidKeysDown(CONTROLLER_P1_AUTO) & KEY_A) {
+        // padGetButtonsDown returns the set of buttons that have been
+        // newly pressed in this frame compared to the previous one
+        if (padGetButtonsDown(&pad) & HidNpadButton_A) {
             rc = process_amiibo(app_id);
 
             // If an error happened, print it.
@@ -239,7 +247,7 @@ int main(int argc, char* argv[])
         }
 
         // If + was pressed to exit an eventWaitLoop(), we also catch it here.
-        if (hidKeysDown(CONTROLLER_P1_AUTO) & KEY_PLUS)
+        if (padGetButtonsDown(&pad) & HidNpadButton_Plus)
             break; // break in order to return to hbmenu
 
         // Update the console, sending a new frame to the display

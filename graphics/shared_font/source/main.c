@@ -18,6 +18,8 @@
 
 static u32 framebuf_width=0;
 
+static PadState pad;
+
 //Note that this doesn't handle any blending.
 void draw_glyph(FT_Bitmap* bitmap, u32* framebuf, u32 x, u32 y)
 {
@@ -102,8 +104,8 @@ static int error_screen(const char* fmt, ...)
     printf("Press PLUS to exit\n");
     while (appletMainLoop())
     {
-        hidScanInput();
-        if (hidKeysDown(CONTROLLER_P1_AUTO) & KEY_PLUS)
+        padUpdate(&pad);
+        if (padGetButtonsDown(&pad) & HidNpadButton_Plus)
             break;
         consoleUpdate(NULL);
     }
@@ -148,6 +150,12 @@ int main(int argc, char **argv)
 {
     Result rc=0;
     FT_Error ret=0;
+
+    // Configure our supported input layout: a single player with standard controller styles
+    padConfigureInput(1, HidNpadStyleSet_NpadStandard);
+
+    // Initialize the default gamepad (which reads handheld mode inputs as well as the first connected controller)
+    padInitializeDefault(&pad);
 
     //Use this when using multiple shared-fonts.
     /*
@@ -198,13 +206,13 @@ int main(int argc, char **argv)
 
     while (appletMainLoop())
     {
-        //Scan all the inputs. This should be done once for each frame
-        hidScanInput();
+        // Scan the gamepad. This should be done once for each frame
+        padUpdate(&pad);
 
-        //hidKeysDown returns information about which buttons have been just pressed (and they weren't in the previous frame)
-        u32 kDown = hidKeysDown(CONTROLLER_P1_AUTO);
+        // padGetButtonsDown returns the set of buttons that have been newly pressed in this frame compared to the previous one
+        u32 kDown = padGetButtonsDown(&pad);
 
-        if (kDown & KEY_PLUS) break; // break in order to return to hbmenu
+        if (kDown & HidNpadButton_Plus) break; // break in order to return to hbmenu
 
         u32 stride;
         u32* framebuf = (u32*)framebufferBegin(&fb, &stride);

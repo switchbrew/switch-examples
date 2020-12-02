@@ -37,6 +37,13 @@ int main(int argc, char* argv[])
     //   take a look at the graphics/opengl set of examples, which uses EGL instead.
     consoleInit(NULL);
 
+    // Configure our supported input layout: a single player with standard controller styles
+    padConfigureInput(1, HidNpadStyleSet_NpadStandard);
+
+    // Initialize the default gamepad (which reads handheld mode inputs as well as the first connected controller)
+    PadState pad;
+    padInitializeDefault(&pad);
+
     printf("alarm-notifications example\n");
 
     Result rc=0, rc2=0;
@@ -75,14 +82,14 @@ int main(int argc, char* argv[])
     // Main loop
     while (appletMainLoop())
     {
-        // Scan all the inputs. This should be done once for each frame
-        hidScanInput();
+        // Scan the gamepad. This should be done once for each frame
+        padUpdate(&pad);
 
-        // hidKeysDown returns information about which buttons have been
-        // just pressed in this frame compared to the previous one
-        u64 kDown = hidKeysDown(CONTROLLER_P1_AUTO);
+        // padGetButtonsDown returns the set of buttons that have been
+        // newly pressed in this frame compared to the previous one
+        u64 kDown = padGetButtonsDown(&pad);
 
-        if (kDown & KEY_PLUS)
+        if (kDown & HidNpadButton_Plus)
             break; // break in order to return to hbmenu
 
         if (R_SUCCEEDED(rc) && R_SUCCEEDED(eventWait(&alarmevent, 0))) { // Some official apps don't use this. See libnx notif.h for this.
@@ -96,7 +103,7 @@ int main(int argc, char* argv[])
         }
 
         if (R_SUCCEEDED(rc)) {
-            if (kDown & KEY_A) {
+            if (kDown & HidNpadButton_A) {
                 // Setup an alarm with {current local-time} + {2 minutes}. You can use any weekday/time you want.
                 // See libnx notif.h for more notifAlarmSetting*() funcs.
 
@@ -121,7 +128,7 @@ int main(int argc, char* argv[])
                     if (R_SUCCEEDED(rc)) printf("alarm_setting_id = 0x%x\n", alarm_setting_id);
                 }
             }
-            else if (kDown & KEY_B) {
+            else if (kDown & HidNpadButton_B) {
                 // List the Alarms.
 
                 total_out=0;
@@ -160,8 +167,8 @@ int main(int argc, char* argv[])
                     }
                 }
             }
-            else if ((kDown & KEY_X) && alarm_setting_id) {
-                // Delete the AlarmSetting which was registered with the KEY_A block.
+            else if ((kDown & HidNpadButton_X) && alarm_setting_id) {
+                // Delete the AlarmSetting which was registered with the HidNpadButton_A block.
                 // If wanted, you can also use this with alarm_settings[alarmi].alarm_setting_id with the output from notifListAlarmSettings.
                 rc = notifDeleteAlarmSetting(alarm_setting_id);
                 printf("notifDeleteAlarmSetting(): 0x%x\n", rc);
