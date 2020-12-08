@@ -94,10 +94,10 @@ int main(int argc, char* argv[])
             state.buttons = 0;
 
             if (padGetButtons(&pad) & HidNpadButton_R)
-                state.buttons |= KEY_HOME;
+                state.buttons |= HiddbgNpadButton_Home;
 
             if (padGetButtons(&pad) & HidNpadButton_L)
-                state.buttons |= KEY_CAPTURE;
+                state.buttons |= HiddbgNpadButton_Capture;
 
             if (padGetButtons(&pad) & HidNpadButton_Up)
                 state.buttons |= HidNpadButton_ZR;
