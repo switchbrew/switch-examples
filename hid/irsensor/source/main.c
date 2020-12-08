@@ -1,8 +1,9 @@
-#include <string.h>
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <stdarg.h>
 
+// Include the main libnx system header, for Switch development
 #include <switch.h>
 
 // Joy-Con IR-sensor example, displays the image from the IR camera. See also libnx irs.h.
@@ -25,8 +26,8 @@ void userAppExit(void)
     irsExit();
 }
 
-__attribute__((format(printf, 1, 2)))
-static int error_screen(const char* fmt, ...)
+__attribute__((format(printf, 2, 3)))
+static int error_screen(PadState *pad, const char* fmt, ...)
 {
     consoleInit(NULL);
     va_list va;
@@ -36,8 +37,8 @@ static int error_screen(const char* fmt, ...)
     printf("Press PLUS to exit\n");
     while (appletMainLoop())
     {
-        hidScanInput();
-        if (hidKeysDown(CONTROLLER_P1_AUTO) & KEY_PLUS)
+        padUpdate(pad);
+        if (padGetButtonsDown(pad) & HidNpadButton_Plus)
             break;
         consoleUpdate(NULL);
     }
@@ -45,26 +46,34 @@ static int error_screen(const char* fmt, ...)
     return EXIT_FAILURE;
 }
 
-int main(int argc, char **argv)
+// Main program entrypoint
+int main(int argc, char* argv[])
 {
     Result rc=0;
+
+    // Configure our supported input layout: a single player with standard controller styles
+    padConfigureInput(1, HidNpadStyleSet_NpadStandard);
+
+    // Initialize the default gamepad (which reads handheld mode inputs as well as the first connected controller)
+    PadState pad;
+    padInitializeDefault(&pad);
 
     const size_t ir_buffer_size = 0x12c00; // Size for the max IrsImageTransferProcessorFormat.
     u8 *ir_buffer = NULL;
     ir_buffer = (u8*)malloc(ir_buffer_size);
     if (!ir_buffer) {
         rc = MAKERESULT(Module_Libnx, LibnxError_OutOfMemory);
-        return error_screen("Failed to allocate memory for ir_buffer.\n");
+        return error_screen(&pad, "Failed to allocate memory for ir_buffer.\n");
     }
 
     memset(ir_buffer, 0, ir_buffer_size);
 
     // Get the handle for the specified controller.
+    padUpdate(&pad); // Only needed because this wasn't used yet, and we're using padIsHandheld.
     IrsIrCameraHandle irhandle;
-    hidScanInput(); // Only needed because hidScanInput() was not used yet since this is before the main-loop, and we're using hidGetHandheldMode().
-    rc = irsGetIrCameraHandle(&irhandle, hidGetHandheldMode() ? CONTROLLER_HANDHELD : CONTROLLER_PLAYER_1);
+    rc = irsGetIrCameraHandle(&irhandle, padIsHandheld(&pad) ? HidNpadIdType_Handheld : HidNpadIdType_No1);
     if (R_FAILED(rc))
-        return error_screen("irsGetIrCameraHandle() returned 0x%x\n", rc);
+        return error_screen(&pad, "irsGetIrCameraHandle() returned 0x%x\n", rc);
 
     // If a controller update is needed, force an update.
     bool updateflag=0;
@@ -81,7 +90,7 @@ int main(int argc, char **argv)
     irsGetDefaultImageTransferProcessorConfig(&config);
     rc = irsRunImageTransferProcessor(irhandle, &config, 0x100000);
     if (R_FAILED(rc))
-        return error_screen("irsRunImageTransferProcessor() returned 0x%x\n", rc);
+        return error_screen(&pad, "irsRunImageTransferProcessor() returned 0x%x\n", rc);
 
     Framebuffer fb;
     framebufferCreate(&fb, nwindowGetDefault(), FB_WIDTH, FB_HEIGHT, PIXEL_FORMAT_RGBA_8888, 2);
@@ -91,13 +100,15 @@ int main(int argc, char **argv)
 
     while (appletMainLoop())
     {
-        // Scan all the inputs. This should be done once for each frame
-        hidScanInput();
+        // Scan the gamepad. This should be done once for each frame
+        padUpdate(&pad);
 
-        // hidKeysDown returns information about which buttons have been just pressed (and they weren't in the previous frame)
-        u64 kDown = hidKeysDown(CONTROLLER_P1_AUTO);
+        // padGetButtonsDown returns the set of buttons that have been
+        // newly pressed in this frame compared to the previous one
+        u64 kDown = padGetButtonsDown(&pad);
 
-        if (kDown & KEY_PLUS) break; // break in order to return to hbmenu
+        if (kDown & HidNpadButton_Plus)
+            break; // break in order to return to hbmenu
 
         // With the default config the image is updated every few seconds (see above). Likewise, it takes a few seconds for the initial image to become available.
         // This will return an error when no image is available yet.
