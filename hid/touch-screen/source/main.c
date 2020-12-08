@@ -1,15 +1,33 @@
-#include <string.h>
+// Include the most common headers from the C standard library
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
+// Include the main libnx system header, for Switch development
 #include <switch.h>
 
-//See also libnx hid.h.
+// This example shows how to use the touch-screen. See also libnx hid.h.
 
-int main(int argc, char **argv)
+// Main program entrypoint
+int main(int argc, char* argv[])
 {
-    u32 prev_touchcount=0;
-
+    // This example uses a text console, as a simple way to output text to the screen.
+    // If you want to write a software-rendered graphics application,
+    //   take a look at the graphics/simplegfx example, which uses the libnx Framebuffer API instead.
+    // If on the other hand you want to write an OpenGL based application,
+    //   take a look at the graphics/opengl set of examples, which uses EGL instead.
     consoleInit(NULL);
+
+    // Configure our supported input layout: a single player with standard controller styles
+    padConfigureInput(1, HidNpadStyleSet_NpadStandard);
+
+    // Initialize the default gamepad (which reads handheld mode inputs as well as the first connected controller)
+    PadState pad;
+    padInitializeDefault(&pad);
+
+    hidInitializeTouchScreen();
+
+    s32 prev_touchcount=0;
 
     printf("\x1b[1;1HPress PLUS to exit.");
     printf("\x1b[2;1HTouch Screen position:");
@@ -17,43 +35,42 @@ int main(int argc, char **argv)
     // Main loop
     while(appletMainLoop())
     {
-        //Scan all the inputs. This should be done once for each frame
-        hidScanInput();
+        // Scan the gamepad. This should be done once for each frame
+        padUpdate(&pad);
 
-        //hidKeysDown returns information about which buttons have been just pressed (and they weren't in the previous frame)
-        u64 kDown = hidKeysDown(CONTROLLER_P1_AUTO);
+        // padGetButtonsDown returns the set of buttons that have been
+        // newly pressed in this frame compared to the previous one
+        u64 kDown = padGetButtonsDown(&pad);
 
-        if (kDown & KEY_PLUS) break; // break in order to return to hbmenu
+        if (kDown & HidNpadButton_Plus)
+            break; // break in order to return to hbmenu
 
-        touchPosition touch;
+        HidTouchScreenState state={0};
+        if (hidGetTouchScreenStates(&state, 1)) {
+            if (state.count != prev_touchcount)
+            {
+                prev_touchcount = state.count;
 
-        u32 i;
-        u32 touch_count = hidTouchCount();
+                consoleClear();
 
-        if (touch_count != prev_touchcount)
-        {
-            prev_touchcount = touch_count;
+                printf("\x1b[1;1HPress PLUS to exit.");
+                printf("\x1b[2;1HTouch Screen position:");
+            }
 
-            consoleClear();
+            printf("\x1b[3;1H");
 
-            printf("\x1b[1;1HPress PLUS to exit.");
-            printf("\x1b[2;1HTouch Screen position:");
+            for(s32 i=0; i<state.count; i++)
+            {
+                // Print the touch screen coordinates
+                printf("[%d] x=%03d, y=%03d, diameter_x=%03d, diameter_y=%03d, rotation_angle=%03d\n", i, state.touches[i].x, state.touches[i].y, state.touches[i].diameter_x, state.touches[i].diameter_y, state.touches[i].rotation_angle);
+            }
         }
 
-        printf("\x1b[3;1H");
-
-        for(i=0; i<touch_count; i++)
-        {
-            //Read the touch screen coordinates
-            hidTouchRead(&touch, i);
-
-            //Print the touch screen coordinates
-            printf("[point_id=%d] px=%03d, py=%03d, dx=%03d, dy=%03d, angle=%03d\n", i, touch.px, touch.py, touch.dx, touch.dy, touch.angle);
-        }
-
+        // Update the console, sending a new frame to the display
         consoleUpdate(NULL);
     }
 
+    // Deinitialize and clean up resources used by the console (important!)
     consoleExit(NULL);
     return 0;
 }
