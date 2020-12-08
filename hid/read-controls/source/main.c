@@ -6,7 +6,7 @@
 // Include the main libnx system header, for Switch development
 #include <switch.h>
 
-//See also libnx hid.h.
+// See also libnx pad.h / hid.h.
 
 // Main program entrypoint
 int main(int argc, char* argv[])
