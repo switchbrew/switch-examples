@@ -1,11 +1,15 @@
-#include <string.h>
+// Include the most common headers from the C standard library
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
+// Include the main libnx system header, for Switch development
 #include <switch.h>
 
-//Example for HID vibration/rumble.
+// Example for HID vibration/rumble.
 
-int main(int argc, char **argv)
+// Main program entrypoint
+int main(int argc, char* argv[])
 {
     HidVibrationDeviceHandle VibrationDeviceHandles[2][2];
     Result rc = 0, rc2 = 0;
@@ -26,11 +30,11 @@ int main(int argc, char **argv)
 
     printf("Press PLUS to exit.\n");
 
-    //Two VibrationDeviceHandles are returned: first one for left-joycon, second one for right-joycon.
-    //Change the total_handles param to 1, and update the hidSendVibrationValues calls, if you only want 1 VibrationDeviceHandle.
+    // Two VibrationDeviceHandles are returned: first one for left-joycon, second one for right-joycon.
+    // Change the total_handles param to 1, and update the hidSendVibrationValues calls, if you only want 1 VibrationDeviceHandle.
     rc = hidInitializeVibrationDevices(VibrationDeviceHandles[0], 2, HidNpadIdType_Handheld, HidNpadStyleTag_NpadHandheld);
 
-    //Setup VibrationDeviceHandles for HidNpadIdType_No1 too, since we want to support both HidNpadIdType_Handheld and HidNpadIdType_No1.
+    // Setup VibrationDeviceHandles for HidNpadIdType_No1 too, since we want to support both HidNpadIdType_Handheld and HidNpadIdType_No1.
     if (R_SUCCEEDED(rc)) rc = hidInitializeVibrationDevices(VibrationDeviceHandles[1], 2, HidNpadIdType_No1, HidNpadStyleTag_NpadJoyDual);
     printf("hidInitializeVibrationDevices() returned: 0x%x\n", rc);
 
@@ -74,10 +78,10 @@ int main(int argc, char **argv)
             rc2 = hidSendVibrationValues(VibrationDeviceHandles[target_device], VibrationValues, 2);
             if (R_FAILED(rc2)) printf("hidSendVibrationValues() returned: 0x%x\n", rc2);
 
-            if (kDown & KEY_A) VibrationValue.amp_low   += 0.1f;
-            if (kDown & KEY_B) VibrationValue.freq_low  += 5.0f;
-            if (kDown & KEY_X) VibrationValue.amp_high  += 0.1f;
-            if (kDown & KEY_Y) VibrationValue.freq_high += 12.0f;
+            if (kDown & HidNpadButton_A) VibrationValue.amp_low   += 0.1f;
+            if (kDown & HidNpadButton_B) VibrationValue.freq_low  += 5.0f;
+            if (kDown & HidNpadButton_X) VibrationValue.amp_high  += 0.1f;
+            if (kDown & HidNpadButton_Y) VibrationValue.freq_high += 12.0f;
         }
         else if(kUp & HidNpadButton_R)//Stop vibration for all devices.
         {
@@ -92,9 +96,11 @@ int main(int argc, char **argv)
             if (R_FAILED(rc2)) printf("hidSendVibrationValues() for stop other device returned: 0x%x\n", rc2);
         }
 
+        // Update the console, sending a new frame to the display
         consoleUpdate(NULL);
     }
 
+    // Deinitialize and clean up resources used by the console (important!)
     consoleExit(NULL);
     return 0;
 }
