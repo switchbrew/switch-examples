@@ -18,11 +18,17 @@ int main(int argc, char* argv[])
     //   take a look at the graphics/opengl set of examples, which uses EGL instead.
     consoleInit(NULL);
 
+    // Configure our supported input layout: a single player with standard controller styles
+    padConfigureInput(1, HidNpadStyleSet_NpadStandard);
+
+    // Initialize the default gamepad (which reads handheld mode inputs as well as the first connected controller)
+    PadState pad;
+    padInitializeDefault(&pad);
+
     Result rc=0;
-    bool initflag=0;
     s32 i;
     s32 total_entries;
-    u64 UniquePadIds[2];
+    HidsysUniquePadId unique_pad_ids[2]={0};
     HidsysNotificationLedPattern pattern;
 
     printf("notification-led example\n");
@@ -33,7 +39,6 @@ int main(int argc, char* argv[])
         printf("Init failed, press + to exit.\n");
     }
     else {
-        initflag = 1;
         printf("Press A to set a Breathing effect notification-LED pattern.\n");
         printf("Press B to set a Heartbeat effect notification-LED pattern.\n");
         printf("Press + to disable notification-LED and exit.\n");
@@ -42,18 +47,18 @@ int main(int argc, char* argv[])
     // Main loop
     while (appletMainLoop())
     {
-        // Scan all the inputs. This should be done once for each frame
-        hidScanInput();
+        // Scan the gamepad. This should be done once for each frame
+        padUpdate(&pad);
 
-        // hidKeysDown returns information about which buttons have been
-        // just pressed in this frame compared to the previous one
-        u64 kDown = hidKeysDown(CONTROLLER_P1_AUTO);
+        // padGetButtonsDown returns the set of buttons that have been
+        // newly pressed in this frame compared to the previous one
+        u64 kDown = padGetButtonsDown(&pad);
 
-        if (kDown & KEY_PLUS) {
+        if (kDown & HidNpadButton_Plus) {
             // Disable notification led. Only needed with hidsysSetNotificationLedPattern, with hidsysSetNotificationLedPatternWithTimeout the LED will be automatically disabled via the timeout.
             memset(&pattern, 0, sizeof(pattern));
         }
-        else if (kDown & KEY_A) {
+        else if (kDown & HidNpadButton_A) {
             memset(&pattern, 0, sizeof(pattern));
 
             // Setup Breathing effect pattern data.
@@ -69,7 +74,7 @@ int main(int argc, char* argv[])
             pattern.miniCycles[1].transitionSteps = 0xF;     // 15 steps. Transition time 1.5s.
             pattern.miniCycles[1].finalStepDuration = 0x0;   // Forced 12.5ms. 
         }
-        else if (kDown & KEY_B) {
+        else if (kDown & HidNpadButton_B) {
             memset(&pattern, 0, sizeof(pattern));
 
             // Setup Heartbeat effect pattern data.
@@ -102,40 +107,40 @@ int main(int argc, char* argv[])
             }
         }
 
-        if (kDown & (KEY_A | KEY_B | KEY_PLUS)) {
+        if (kDown & (HidNpadButton_A | HidNpadButton_B | HidNpadButton_Plus)) {
             total_entries = 0;
-            memset(UniquePadIds, 0, sizeof(UniquePadIds));
+            memset(unique_pad_ids, 0, sizeof(unique_pad_ids));
 
             // Get the UniquePadIds for the specified controller, which will then be used with hidsysSetNotificationLedPattern*.
             // If you want to get the UniquePadIds for all controllers, you can use hidsysGetUniquePadIds instead.
-            rc = hidsysGetUniquePadsFromNpad(hidGetHandheldMode() ? CONTROLLER_HANDHELD : CONTROLLER_PLAYER_1, UniquePadIds, 2, &total_entries);
+            rc = hidsysGetUniquePadsFromNpad(padIsHandheld(&pad) ? HidNpadIdType_Handheld : HidNpadIdType_No1, unique_pad_ids, 2, &total_entries);
             printf("hidsysGetUniquePadsFromNpad(): 0x%x", rc);
             if (R_SUCCEEDED(rc)) printf(", %d", total_entries);
             printf("\n");
 
             if (R_SUCCEEDED(rc)) {
                 for(i=0; i<total_entries; i++) { // System will skip sending the subcommand to controllers where this isn't available.
-                    printf("[%d] = 0x%lx ", i, UniquePadIds[i]);
+                    printf("[%d] = 0x%lx ", i, unique_pad_ids[i].id);
 
                     // Attempt to use hidsysSetNotificationLedPatternWithTimeout first with a 2 second timeout, then fallback to hidsysSetNotificationLedPattern on failure. See hidsys.h for the requirements for using these.
-                    rc = hidsysSetNotificationLedPatternWithTimeout(&pattern, UniquePadIds[i], 2000000000ULL);
+                    rc = hidsysSetNotificationLedPatternWithTimeout(&pattern, unique_pad_ids[i], 2000000000ULL);
                     printf("hidsysSetNotificationLedPatternWithTimeout(): 0x%x\n", rc);
                     if (R_FAILED(rc)) {
-                        rc = hidsysSetNotificationLedPattern(&pattern, UniquePadIds[i]);
+                        rc = hidsysSetNotificationLedPattern(&pattern, unique_pad_ids[i]);
                         printf("hidsysSetNotificationLedPattern(): 0x%x\n", rc);
                     }
                 }
             }
         }
 
+        if (kDown & HidNpadButton_Plus)
+            break; // break in order to return to hbmenu
+
         // Update the console, sending a new frame to the display
         consoleUpdate(NULL);
-
-        if (kDown & KEY_PLUS)
-            break; // break in order to return to hbmenu
     }
 
-    if (initflag) hidsysExit();
+    hidsysExit();
 
     // Deinitialize and clean up resources used by the console (important!)
     consoleExit(NULL);
