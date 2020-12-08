@@ -19,22 +19,17 @@ int main(int argc, char* argv[])
     //   take a look at the graphics/opengl set of examples, which uses EGL instead.
     consoleInit(NULL);
 
+    // Configure our supported input layout: all players with standard controller styles
+    padConfigureInput(8, HidNpadStyleSet_NpadStandard);
+
+    // Initialize the gamepad for reading all controllers
+    PadState pad;
+    padInitializeAny(&pad);
+
     Result rc=0;
     bool initflag=0;
-    u32 i;
 
     printf("abstracted-pad example\n");
-
-    hidScanInput();
-
-    // When hiddbgSetAutoPilotVirtualPadState runs a new controller may become available, depending on the specified npadInterfaceType field. If CONTROLLER_HANDHELD is being internally, CONTROLLER_P1_AUTO would use the new controller. Check which controller we're currently using and don't use CONTROLLER_P1_AUTO, so it doesn't switch to using the new controller later.
-    HidControllerID conID = hidGetHandheldMode() ? CONTROLLER_HANDHELD : CONTROLLER_PLAYER_1;
-
-    printf("Connected controllers: ");
-    for(i=0; i<10; i++) {
-        if (hidIsControllerConnected(i)) printf("%d ", i);
-    }
-    printf("\n");
 
     rc = hiddbgInitialize();
     if (R_FAILED(rc)) {
@@ -44,7 +39,7 @@ int main(int argc, char* argv[])
         initflag = 1;
     }
 
-    u64 pads[8]={0};
+    HiddbgAbstractedPadHandle pads[8]={0};
     HiddbgAbstractedPadState states[8]={0};
     s32 tmpout=0;
 
@@ -57,26 +52,24 @@ int main(int argc, char* argv[])
     // Main loop
     while (appletMainLoop())
     {
-        // Scan all the inputs. This should be done once for each frame
-        hidScanInput();
+        // Scan the gamepad. This should be done once for each frame
+        padUpdate(&pad);
 
-        // hidKeysDown returns information about which buttons have been
-        // just pressed in this frame compared to the previous one
-        u64 kDown = hidKeysDown(conID);
+        // padGetButtonsDown returns the set of buttons that have been
+        // newly pressed in this frame compared to the previous one
+        u64 kDown = padGetButtonsDown(&pad);
 
-        if (R_SUCCEEDED(rc) && (kDown & (KEY_A | KEY_X))) {
-            printf("Connected controllers:\n");
-            for(i=0; i<10; i++) {
-                if (hidIsControllerConnected(i)) {
-                    JoystickPosition tmpjoy[2];
-                    hidJoystickRead(&tmpjoy[0], i, JOYSTICK_LEFT);
-                    hidJoystickRead(&tmpjoy[1], i, JOYSTICK_RIGHT);
-                    printf("%d: type = 0x%x, devicetype = 0x%x, buttons = 0x%lx, stickL.dx = 0x%x, stickL.dy = 0x%x, stickR.dx = 0x%x, stickR.dy = 0x%x\n", i, hidGetControllerType(i), hidGetControllerDeviceType(i), hidKeysHeld(i), tmpjoy[0].dx, tmpjoy[0].dy, tmpjoy[1].dx, tmpjoy[1].dy);
-                }
-            }
+        if (kDown & HidNpadButton_Plus)
+            break; // break in order to return to hbmenu
+
+        if (R_SUCCEEDED(rc) && (kDown & (HidNpadButton_A | HidNpadButton_X))) {
+            printf("Controllers state:\n");
+            HidAnalogStickState analog_stick_l = padGetStickPos(&pad, 0);
+            HidAnalogStickState analog_stick_r = padGetStickPos(&pad, 1);
+            printf("buttons = 0x%lx, analog_stick_l.x = 0x%x, analog_stick_l.y = 0x%x, analog_stick_r.x = 0x%x, analog_stick_r.y = 0x%x\n", padGetButtons(&pad), analog_stick_l.x, analog_stick_l.y, analog_stick_r.x, analog_stick_r.y);
         }
 
-        if (R_SUCCEEDED(rc) && (kDown & KEY_A)) {
+        if (R_SUCCEEDED(rc) && (kDown & HidNpadButton_A)) {
             tmpout = 0;
             rc = hiddbgGetAbstractedPadsState(pads, states, sizeof(pads)/sizeof(u64), &tmpout);
             printf("hiddbgGetAbstractedPadsState(): 0x%x, 0x%x\n", rc, tmpout);
@@ -86,7 +79,7 @@ int main(int argc, char* argv[])
             if (R_SUCCEEDED(rc) && tmpout>=1) {
                 for (u32 i=0; i<tmpout; i++) {
                     printf("0x%x: \n", i);
-                    printf("type = 0x%x, flags = 0x%x, colors = 0x%x 0x%x, npadInterfaceType = 0x%x, buttons = 0x%x, stickL.dx = 0x%x, stickL.dy = 0x%x, stickR.dx = 0x%x, stickR.dy = 0x%x\n", states[i].type, states[i].flags, states[i].singleColorBody, states[i].singleColorButtons, states[i].npadInterfaceType, states[i].state.buttons, states[i].state.joysticks[0].dx, states[i].state.joysticks[0].dy, states[i].state.joysticks[1].dx, states[i].state.joysticks[1].dy);
+                    printf("type = 0x%x, flags = 0x%x, colors = 0x%x 0x%x, npadInterfaceType = 0x%x, buttons = 0x%x, analog_stick_l.x = 0x%x, analog_stick_l.y = 0x%x, analog_stick_r.x = 0x%x, analog_stick_r.y = 0x%x\n", states[i].type, states[i].flags, states[i].singleColorBody, states[i].singleColorButtons, states[i].npadInterfaceType, states[i].state.buttons, states[i].state.analog_stick_l.x, states[i].state.analog_stick_l.y, states[i].state.analog_stick_r.x, states[i].state.analog_stick_r.y);
                 }
             }
 
@@ -99,9 +92,9 @@ int main(int argc, char* argv[])
                 states[0].type = BIT(1);
                 // Use state-merge for the above controller, the state will be merged with an existing controller.
                 // For a plain virtual controller, use NpadInterfaceType_Bluetooth, and update the above type value.
-                states[0].npadInterfaceType = NpadInterfaceType_Rail;
+                states[0].npadInterfaceType = HidNpadInterfaceType_Rail;
 
-                states[0].state.buttons |= KEY_ZL;
+                states[0].state.buttons |= HidNpadButton_ZL;
 
                 rc = hiddbgSetAutoPilotVirtualPadState(AbstractedVirtualPadId, &states[0]);
                 printf("hiddbgSetAutoPilotVirtualPadState(): 0x%x\n", rc);
@@ -110,9 +103,6 @@ int main(int argc, char* argv[])
 
         // Update the console, sending a new frame to the display
         consoleUpdate(NULL);
-
-        if (kDown & KEY_PLUS)
-            break; // break in order to return to hbmenu
     }
 
     if (initflag) {
