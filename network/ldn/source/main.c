@@ -293,10 +293,10 @@ int main(int argc, char **argv)
             char tmpstr[32];
             memset(tmpstr, 0, sizeof(tmpstr));
 
-            if (kDown & HidNpadButton_Left) strncpy(tmpstr, "Button DLEFT pressed.", sizeof(tmpstr)-1);
-            else if (kDown & HidNpadButton_Right) strncpy(tmpstr, "Button DRIGHT pressed.", sizeof(tmpstr)-1);
-            else if (kDown & HidNpadButton_Up) strncpy(tmpstr, "Button DUP pressed.", sizeof(tmpstr)-1);
-            else if (kDown & HidNpadButton_Down) strncpy(tmpstr, "Button DDOWN pressed.", sizeof(tmpstr)-1);
+            if (kDown & HidNpadButton_Left) strncpy(tmpstr, "Button Left pressed.", sizeof(tmpstr)-1);
+            else if (kDown & HidNpadButton_Right) strncpy(tmpstr, "Button Right pressed.", sizeof(tmpstr)-1);
+            else if (kDown & HidNpadButton_Up) strncpy(tmpstr, "Button Up pressed.", sizeof(tmpstr)-1);
+            else if (kDown & HidNpadButton_Down) strncpy(tmpstr, "Button Down pressed.", sizeof(tmpstr)-1);
 
             ssize_t ret = sendto(sockfd, tmpstr, sizeof(tmpstr), 0, (struct sockaddr*) &serv_addr, sizeof(struct sockaddr_in));
             int tmp = errno;
