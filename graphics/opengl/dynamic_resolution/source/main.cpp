@@ -464,7 +464,7 @@ static void configureResolution(NWindow* win, bool halved)
             width = 1280;
             height = 720;
             break;
-        case AppletOperationMode_Docked:
+        case AppletOperationMode_Console:
             width = 1920;
             height = 1080;
             break;
