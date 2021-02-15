@@ -145,13 +145,13 @@ int main(int argc, char **argv)
             play_tone = true;
         }
 
-        if (kDown & KEY_L)
+        if (kDown & HidNpadButton_L)
         {
             fill_audio_buffer(out_buf_data, 0, data_size, notefreq[8]);
             play_tone = true;
         }
 
-        if (kDown & KEY_R)
+        if (kDown & HidNpadButton_R)
         {
             fill_audio_buffer(out_buf_data, 0, data_size, notefreq[9]);
             play_tone = true;
