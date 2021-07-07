@@ -38,7 +38,7 @@ int main(int argc, char **argv)
         double rawCharge;
         double age;
         bool isEnoughPower;
-        ChargerType type;
+        PsmChargerType type;
         printf("\x1b[1;1H\x1b[K");
 
         rc = psmGetBatteryChargePercentage(&charge);
