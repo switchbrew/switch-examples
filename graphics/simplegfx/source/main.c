@@ -33,6 +33,8 @@ int main(int argc, char* argv[])
 
 #ifdef DISPLAY_IMAGE
     u8* imageptr = (u8*)image_bin;
+    const u32 image_width = 1280;
+    const u32 image_height = 720;
 #endif
 
     // Configure our supported input layout: a single player with standard controller styles
@@ -73,7 +75,9 @@ int main(int argc, char* argv[])
             {
                 u32 pos = y * stride / sizeof(u32) + x;
 #ifdef DISPLAY_IMAGE
-                framebuf[pos] = RGBA8_MAXALPHA(imageptr[pos*3+0]+(cnt*4), imageptr[pos*3+1], imageptr[pos*3+2]);
+                if (y >= image_height || x >= image_width) continue;
+                u32 imagepos = y * image_width + x;
+                framebuf[pos] = RGBA8_MAXALPHA(imageptr[imagepos*3+0]+(cnt*4), imageptr[imagepos*3+1], imageptr[imagepos*3+2]);
 #else
                 framebuf[pos] = 0x01010101 * cnt * 4;//Set framebuf to different shades of grey.
 #endif
