@@ -39,6 +39,7 @@ int main(int argc, char* argv[])
         initflag = 1;
     }
 
+    HiddbgHdlsSessionId session_id={0};
     HiddbgHdlsHandle HdlsHandle={0};
     HiddbgHdlsDeviceInfo device = {0};
     HiddbgHdlsState state={0};
@@ -60,7 +61,7 @@ int main(int argc, char* argv[])
     state.analog_stick_r.y = -0x5678;
 
     if (initflag) {
-        rc = hiddbgAttachHdlsWorkBuffer();
+        rc = hiddbgAttachHdlsWorkBuffer(&session_id);
         printf("hiddbgAttachHdlsWorkBuffer(): 0x%x\n", rc);
 
         if (R_SUCCEEDED(rc)) {
@@ -128,7 +129,7 @@ int main(int argc, char* argv[])
             printf("hiddbgDetachHdlsVirtualDevice(): 0x%x\n", rc);
         }
 
-        rc = hiddbgReleaseHdlsWorkBuffer();
+        rc = hiddbgReleaseHdlsWorkBuffer(session_id);
         printf("hiddbgReleaseHdlsWorkBuffer(): 0x%x\n", rc);
 
         hiddbgExit();
