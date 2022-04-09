@@ -37,7 +37,21 @@ int main(int argc, char **argv)
         rc = accountGetPreselectedUser(&userID);
 
         if (R_FAILED(rc)) {
-            printf("accountGetPreselectedUser() failed: 0x%x\n", rc);
+            printf("accountGetPreselectedUser() failed: 0x%x, using pselUi..\n", rc);
+            
+            /* Create player selection UI settings */
+            PselUiSettings settings;
+            rc = pselUiCreate(&settings, PselUiMode_UserSelector);
+
+            if (R_FAILED(rc)) {
+                printf("pselUiCreate() failed: 0x%x\n", rc);
+            } else {
+                /* Ask for a user account */
+                rc = pselUiShow(&settings, &userID);
+                if (R_FAILED(rc)) {
+                    printf("pselUiShow() failed: 0x%x\n", rc);
+                }
+            }
         }
 
         if (R_SUCCEEDED(rc)) {
