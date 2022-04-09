@@ -46,7 +46,7 @@ int main(int argc, char **argv)
             rc = pselShowUserSelector(&userID, &settings);
 
             if (R_FAILED(rc)) {
-                printf("pselShowUserSelector() failed: 0x%x\n", rc);
+                printf("using pselShowUserSelector() failed: 0x%x\n", rc);
             }
         }
 
