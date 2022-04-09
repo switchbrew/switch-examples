@@ -37,8 +37,8 @@ int main(int argc, char **argv)
         rc = accountGetPreselectedUser(&userID);
 
         if (R_FAILED(rc)) {
-            printf("accountGetPreselectedUser() failed: 0x%x, using pselUi..\n", rc);
-            
+            printf("accountGetPreselectedUser() failed: 0x%x, using pselShowUserSelector..\n", rc);
+
             /* Create player selection UI settings */
             PselUserSelectionSettings settings;
             memset(&settings, 0, sizeof(settings));
@@ -46,7 +46,7 @@ int main(int argc, char **argv)
             rc = pselShowUserSelector(&userID, &settings);
 
             if (R_FAILED(rc)) {
-                printf("using pselShowUserSelector() failed: 0x%x\n", rc);
+                printf("pselShowUserSelector() failed: 0x%x\n", rc);
             }
         }
 
