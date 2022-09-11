@@ -173,7 +173,7 @@ public:
 
     T*     first() const { return toType(minmax(N::Left));  }
     T*     last()  const { return toType(minmax(N::Right)); }
-    bool   empty() const { return m_root != nullptr; }
+    bool   empty() const { return m_root == nullptr; }
     void   clear()       { m_root = nullptr; }
 
     T* prev(T* node) const { return toType(walk(toNode(node), N::Left));  }
@@ -194,31 +194,11 @@ public:
             mode != UpperBound ? N::Left : N::Right,
             [&lambda](N* curnode) { return lambda(toType(curnode)); });
 
-        switch (mode)
-        {
-            default:
-            case Exact:
-                break;
-            case LowerBound:
-                if (!node && parent)
-                {
-                    if (&parent->left() == &point)
-                        node = parent;
-                    else
-                        node = walk(parent, N::Right);
-                }
-                break;
-            case UpperBound:
-                if (node)
-                    node = walk(node, N::Right);
-                else if (parent)
-                {
-                    if (&parent->right() == &point)
-                        node = walk(parent, N::Right);
-                    else
-                        node = parent;
-                }
-                break;
+        if (mode != Exact) {
+            if (mode == UpperBound && node)
+                node = walk(node, N::Right);
+            else if (!node && parent)
+                node = &parent->left() == &point ? parent : walk(parent, N::Right);
         }
         return toType(node);
     }
