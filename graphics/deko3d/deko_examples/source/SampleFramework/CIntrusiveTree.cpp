@@ -192,7 +192,7 @@ void CIntrusiveTreeBase::remove(N* node)
     }
     else
     {
-        child  = node->left() ? node->right() : node->left();
+        child  = node->left() ? node->left() : node->right();
         parent = node->getParent();
         color  = node->getColor();
 
