@@ -133,14 +133,6 @@ int main(int argc, char* argv[])
             rc = pdmqryGetAvailablePlayEventRange(&total_entries, &start_entryindex, &end_entryindex);
             printf("pdmqryGetAvailablePlayEventRange(): 0x%x, 0x%x, 0x%x, 0x%x\n", rc, total_entries, start_entryindex, end_entryindex);
 
-            // Get a listing of applications recently played by the specified user.
-            rc = pdmqryQueryRecentlyPlayedApplication(preselected_uid, false, application_ids, 1, &total_out);
-            printf("pdmqryQueryRecentlyPlayedApplication(): 0x%x, %d\n", rc, total_out);
-            if (R_SUCCEEDED(rc)) {
-                for (i=0; i<total_out; i++)
-                    printf("%d: application_id = 0x%08lX\n", i, application_ids[i]);
-            }
-
             // For more cmds, see pdm.h.
         }
 
