@@ -15,6 +15,9 @@ class CCmdMemRing
     dk::Fence m_fences[NumSlices];
 public:
     CCmdMemRing() : m_mem{}, m_curSlice{}, m_fences{} { }
+
+    CCmdMemRing(const CCmdMemRing&) = delete;
+
     ~CCmdMemRing()
     {
         m_mem.destroy();
