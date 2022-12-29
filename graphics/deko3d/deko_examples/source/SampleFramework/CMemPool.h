@@ -20,6 +20,8 @@ class CMemPool
         void* m_cpuAddr;
         DkGpuAddr m_gpuAddr;
 
+        Block(const Block&) = delete;
+
         constexpr void* cpuOffset(uint32_t offset) const
         {
             return m_cpuAddr ? ((u8*)m_cpuAddr + offset) : nullptr;
