@@ -74,8 +74,6 @@ public:
         constexpr bool operator==(Handle const& rhs) const { return m_slice == rhs.m_slice; }
         constexpr bool operator!=(Handle const& rhs) const { return m_slice != rhs.m_slice; }
 
-        Handle(const Handle&) = delete;
-
         void destroy()
         {
             if (m_slice)
