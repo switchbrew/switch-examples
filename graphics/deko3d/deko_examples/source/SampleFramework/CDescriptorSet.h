@@ -18,7 +18,12 @@ class CDescriptorSet
 	CMemPool::Handle m_mem;
 public:
 	CDescriptorSet() : m_mem{} { }
-	~CDescriptorSet()
+
+    CDescriptorSet(const CDescriptorSet&) = delete;
+
+    CDescriptorSet& operator=(const CDescriptorSet&) = delete;
+
+    ~CDescriptorSet()
 	{
 		m_mem.destroy();
 	}

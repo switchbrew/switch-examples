@@ -12,6 +12,11 @@ class CShader
     CMemPool::Handle m_codemem;
 public:
     CShader() : m_shader{}, m_codemem{} { }
+
+    CShader(const CShader&) = delete;
+
+    CShader& operator=(const CShader&) = delete;
+
     ~CShader()
     {
         m_codemem.destroy();

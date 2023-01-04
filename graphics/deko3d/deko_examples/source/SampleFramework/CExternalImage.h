@@ -13,6 +13,11 @@ class CExternalImage
     CMemPool::Handle m_mem;
 public:
     CExternalImage() : m_image{}, m_descriptor{}, m_mem{} { }
+
+    CExternalImage(const CExternalImage&) = delete;
+
+    CExternalImage& operator=(const CExternalImage&) = delete;
+
     ~CExternalImage()
     {
         m_mem.destroy();

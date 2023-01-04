@@ -20,6 +20,10 @@ class CMemPool
         void* m_cpuAddr;
         DkGpuAddr m_gpuAddr;
 
+        Block(const Block&) = delete;
+
+        Block& operator=(const Block&) = delete;
+
         constexpr void* cpuOffset(uint32_t offset) const
         {
             return m_cpuAddr ? ((u8*)m_cpuAddr + offset) : nullptr;
@@ -41,6 +45,10 @@ class CMemPool
         Block* m_block;
         uint32_t m_start;
         uint32_t m_end;
+
+        Slice(const Slice&) = delete;
+
+        Slice& operator=(const Slice&) = delete;
 
         constexpr uint32_t getSize() const { return m_end - m_start; }
         constexpr bool canCoalesce(Slice const& rhs) const { return m_pool == rhs.m_pool && m_block == rhs.m_block && m_end == rhs.m_start; }
@@ -109,9 +117,14 @@ public:
 
     CMemPool(dk::Device dev, uint32_t flags = DkMemBlockFlags_CpuUncached | DkMemBlockFlags_GpuCached, uint32_t blockSize = DefaultBlockSize) :
         m_dev{dev}, m_flags{flags}, m_blockSize{blockSize}, m_blocks{}, m_memMap{}, m_sliceHeap{}, m_freeList{} { }
+
     ~CMemPool();
 
     Handle allocate(uint32_t size, uint32_t alignment = DK_CMDMEM_ALIGNMENT);
+
+    CMemPool(const CMemPool&) = delete;
+
+    CMemPool& operator=(const CMemPool&) = delete;
 };
 
 constexpr bool operator<(uint32_t lhs, CMemPool::Slice const& rhs)
