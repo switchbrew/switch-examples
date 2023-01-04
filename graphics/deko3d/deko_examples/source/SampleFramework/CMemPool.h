@@ -22,6 +22,8 @@ class CMemPool
 
         Block(const Block&) = delete;
 
+        Block& operator=(const Block&) = delete;
+
         constexpr void* cpuOffset(uint32_t offset) const
         {
             return m_cpuAddr ? ((u8*)m_cpuAddr + offset) : nullptr;
@@ -45,7 +47,9 @@ class CMemPool
         uint32_t m_end;
 
         Slice(const Slice&) = delete;
-        
+
+        Slice& operator=(const Slice&) = delete;
+
         constexpr uint32_t getSize() const { return m_end - m_start; }
         constexpr bool canCoalesce(Slice const& rhs) const { return m_pool == rhs.m_pool && m_block == rhs.m_block && m_end == rhs.m_start; }
 
@@ -119,6 +123,8 @@ public:
     Handle allocate(uint32_t size, uint32_t alignment = DK_CMDMEM_ALIGNMENT);
 
     CMemPool(const CMemPool&) = delete;
+
+    CMemPool& operator=(const CMemPool&) = delete;
 };
 
 constexpr bool operator<(uint32_t lhs, CMemPool::Slice const& rhs)

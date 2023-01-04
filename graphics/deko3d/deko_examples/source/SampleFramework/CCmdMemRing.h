@@ -18,6 +18,8 @@ public:
 
     CCmdMemRing(const CCmdMemRing&) = delete;
 
+    CCmdMemRing& operator=(const CCmdMemRing&) = delete;
+
     ~CCmdMemRing()
     {
         m_mem.destroy();
