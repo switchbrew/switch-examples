@@ -28,6 +28,8 @@ int main(int argc, char* argv[])
 
     Result rc=0, rc2=0;
     bool initflag=0;
+    u8 *workmem = NULL;
+    size_t workmem_size = 0x1000;
 
     printf("hdls example\n");
 
@@ -36,7 +38,9 @@ int main(int argc, char* argv[])
         printf("hiddbgInitialize(): 0x%x\n", rc);
     }
     else {
-        initflag = 1;
+        workmem = aligned_alloc(0x1000, workmem_size);
+        if (workmem) initflag = 1;
+        else printf("workmem alloc failed\n");
     }
 
     HiddbgHdlsSessionId session_id={0};
@@ -61,7 +65,7 @@ int main(int argc, char* argv[])
     state.analog_stick_r.y = -0x5678;
 
     if (initflag) {
-        rc = hiddbgAttachHdlsWorkBuffer(&session_id);
+        rc = hiddbgAttachHdlsWorkBuffer(&session_id, workmem, workmem_size);
         printf("hiddbgAttachHdlsWorkBuffer(): 0x%x\n", rc);
 
         if (R_SUCCEEDED(rc)) {
@@ -133,6 +137,7 @@ int main(int argc, char* argv[])
         printf("hiddbgReleaseHdlsWorkBuffer(): 0x%x\n", rc);
 
         hiddbgExit();
+        free(workmem);
     }
 
     // Deinitialize and clean up resources used by the console (important!)
