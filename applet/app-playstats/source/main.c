@@ -86,7 +86,7 @@ int main(int argc, char* argv[])
                 printf("total_out: %d\n", total_out);
                 for (i=0; i<total_out; i++) {
                     printf("%d: ", i);
-                    printf("application_id = 0x%08lX, totalPlayTime = %lu (%llu seconds), totalLaunches = %lu\n", stats[i].application_id, stats[i].totalPlayTime, stats[i].totalPlayTime / 1000000000ULL, stats[i].totalLaunches);
+                    printf("application_id = 0x%08lX, playtime = %lu (%lu seconds), total_launches = %lu\n", stats[i].application_id, stats[i].playtime, stats[i].playtime / 1000000000UL, stats[i].total_launches);
                 }
             }
         }
@@ -101,10 +101,10 @@ int main(int argc, char* argv[])
             if (R_SUCCEEDED(rc)) {
                 printf("total_out: %d\n", total_out);
                 for (i=0; i<total_out; i++) {
-                    time_t tmptime = pdmPlayTimestampToPosix(events[i].timestampUser);
+                    time_t tmptime = events[i].timestamp_user;
 
                     printf("%d: ", i);
-                    printf("program_id = 0x%08lX, entry_index = 0x%x, timestampUser = %u, timestampNetwork = %u, eventType = %u, timestampUser = %s\n", events[i].program_id, events[i].entry_index, events[i].timestampUser, events[i].timestampNetwork, events[i].eventType, ctime(&tmptime));
+                    printf("program_id = 0x%08lX, entry_index = 0x%x, timestamp_user = %lu, timestamp_network = %lu, event_type = %u, timestamp_user = %s\n", events[i].program_id, events[i].entry_index, events[i].timestamp_user, events[i].timestamp_network, events[i].event_type, ctime(&tmptime));
                 }
             }
 
@@ -112,12 +112,12 @@ int main(int argc, char* argv[])
             PdmPlayStatistics playstats[1]={0};
             rc = pdmqryQueryPlayStatisticsByApplicationId(application_ids[0], false, &playstats[0]);
             printf("pdmqryQueryPlayStatisticsByApplicationId(): 0x%x\n", rc);
-            if (R_SUCCEEDED(rc)) printf("application_id = 0x%08lX, playtimeMinutes = %u, totalLaunches = %u\n", playstats[0].application_id, playstats[0].playtimeMinutes, playstats[0].totalLaunches);
+            if (R_SUCCEEDED(rc)) printf("program_id = 0x%016lX, playtime = %lu (%lu seconds), total_launches = %u\n", playstats[0].program_id, playstats[0].playtime, playstats[0].playtime / 1000000000UL, playstats[0].total_launches);
 
             // Get PdmPlayStatistics for the specified ApplicationId and user.
             rc = pdmqryQueryPlayStatisticsByApplicationIdAndUserAccountId(application_ids[0], preselected_uid, false, &playstats[0]);
             printf("pdmqryQueryPlayStatisticsByApplicationIdAndUserAccountId(): 0x%x\n", rc);
-            if (R_SUCCEEDED(rc)) printf("application_id = 0x%08lX, playtimeMinutes = %u, totalLaunches = %u\n", playstats[0].application_id, playstats[0].playtimeMinutes, playstats[0].totalLaunches);
+            if (R_SUCCEEDED(rc)) printf("program_id = 0x%016lX, playtime = %lu (%lu seconds), total_launches = %u\n", playstats[0].program_id, playstats[0].playtime, playstats[0].playtime / 1000000000UL, playstats[0].total_launches);
 
             // Get a listing of PdmLastPlayTime for the specified applications.
             PdmLastPlayTime playtimes[1]={0};
@@ -125,13 +125,26 @@ int main(int argc, char* argv[])
             printf("pdmqryQueryLastPlayTime(): 0x%x, %d\n", rc, total_out);
             if (R_SUCCEEDED(rc)) {
                 for (i=0; i<total_out; i++)
-                    printf("%d: timestampUser = %lu\n", i, pdmPlayTimestampToPosix(playtimes[i].timestampUser));
+                    printf("%d: timestamp_user = %lu\n", i, pdmPlayTimestampToPosix(playtimes[i].timestamp_user));
             }
 
             // Get the available range for reading events, see pdm.h.
             s32 total_entries=0, start_entryindex=0, end_entryindex=0;
             rc = pdmqryGetAvailablePlayEventRange(&total_entries, &start_entryindex, &end_entryindex);
             printf("pdmqryGetAvailablePlayEventRange(): 0x%x, 0x%x, 0x%x, 0x%x\n", rc, total_entries, start_entryindex, end_entryindex);
+
+            // Get account events.
+            PdmAccountEvent accevents[5]={};
+            rc = pdmqryQueryAccountEvent(0, accevents, 5, &total_out);
+            printf("pdmqryQueryAccountEvent(): 0x%x\n", rc);
+            if (R_SUCCEEDED(rc)) {
+                printf("total_out: %d\n", total_out);
+                for (i=0; i<total_out; i++) {
+                    time_t tmptime = accevents[i].timestamp_user;
+                    printf("%d: ", i);
+                    printf("uid = 0x%lx 0x%lx, program_id = 0x%016lX, entry_index = 0x%x, timestamp_user = %lu, timestamp_network = %lu, event_type = %u, timestamp_user = %s\n", accevents[i].uid.uid[0], accevents[i].uid.uid[1], accevents[i].program_id, accevents[i].entry_index, accevents[i].timestamp_user, accevents[i].timestamp_network, accevents[i].type, ctime(&tmptime));
+                }
+            }
 
             // For more cmds, see pdm.h.
         }
