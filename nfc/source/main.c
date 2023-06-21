@@ -33,7 +33,7 @@ void print_hex(void *buf, size_t size) {
     consoleUpdate(NULL);
 }
 
-Result process_amiibo(u32 app_id) {
+Result process_amiibo() {
     Result rc = 0;
 
     // Get the handle of the first controller with NFC capabilities.
@@ -94,14 +94,33 @@ Result process_amiibo(u32 app_id) {
         rc = eventWaitLoop(&activate_event);
 
         if (R_SUCCEEDED(rc)) {
-            printf("A tag was detected, please do not remove it from the NFC spot.\n");
+            printf("A tag was detected, please do not remove it from the NFC spot.\n\n");
             consoleUpdate(NULL);
         }
     }
 
+    // Retrieve the tag info data, which contains the protocol, type and uuid.
+    if (R_SUCCEEDED(rc)) {
+        NfpTagInfo tag_info = {0};
+        rc = nfpGetTagInfo(&handle, &tag_info);
+
+        if (R_SUCCEEDED(rc)) {
+            printf("Tag protocol: 0x%02x, type: 0x%02x, UUID: ", tag_info.protocol, tag_info.tag_type);
+            print_hex(tag_info.uuid, tag_info.uuid_length);
+            printf("\n");
+        }
+    }
+
     // If a tag was successfully detected, load it into memory.
-    if (R_SUCCEEDED(rc))
+    if (R_SUCCEEDED(rc)) {
         rc = nfpMount(&handle, NfpDeviceType_Amiibo, NfpMountTarget_All);
+
+        if (rc == 0x11073) // 2115-0136
+            printf("This tag is corrupted and has a backup in system.\n");
+
+        if (rc == 0x12073) // 2115-0144
+            printf("This tag is corrupted.\n");
+    }
 
     // Retrieve the model info data, which contains the amiibo id.
     if (R_SUCCEEDED(rc)) {
@@ -111,6 +130,7 @@ Result process_amiibo(u32 app_id) {
         if (R_SUCCEEDED(rc)) {
             printf("Amiibo ID: ");
             print_hex(model_info.amiibo_id, 8);
+            printf("\n");
         }
     }
 
@@ -120,8 +140,43 @@ Result process_amiibo(u32 app_id) {
         NfpCommonInfo common_info = {0};
         rc = nfpGetCommonInfo(&handle, &common_info);
 
-        if (R_SUCCEEDED(rc))
+        if (R_SUCCEEDED(rc)) {
             app_area_size = common_info.application_area_size;
+            printf("Write counter: %d, last write date %d/%d/%d\n\n", common_info.write_counter, common_info.last_write_day, common_info.last_write_month, common_info.last_write_year);
+        }
+    }
+
+    u32 app_id=0;
+    // Retrieve the admin info data, which contains the app id.
+    if (R_SUCCEEDED(rc)) {
+        NfpAdminInfo admin_info = {0};
+        rc = nfpGetAdminInfo(&handle, &admin_info);
+
+        if (R_SUCCEEDED(rc)) {
+            app_id = admin_info.application_area_id;
+            printf("App area: 0x%x, game ID: 0x%lx, console: ", app_id, admin_info.application_id);
+            switch (admin_info.application_area_version) {
+                case NfpApplicationAreaVersion_3DS:
+                    printf("Old 3ds");
+                    break;
+                case NfpApplicationAreaVersion_WiiU:
+                    printf("Wii U");
+                    break;
+                case NfpApplicationAreaVersion_3DSv2:
+                    printf("New 3ds");
+                    break;
+                case NfpApplicationAreaVersion_Switch:
+                    printf("Switch");
+                    break;
+                case NfpApplicationAreaVersion_NotSet:
+                    printf("Not set");
+                    break;
+                default:
+                    printf("0x%x", admin_info.application_area_version);
+                    break;
+            }
+            printf("\n");
+        }
     }
 
     if (R_SUCCEEDED(rc)) {
@@ -134,13 +189,15 @@ Result process_amiibo(u32 app_id) {
     }
 
     u8 app_area[0xd8] = {0}; // Maximum size of the application area.
+    u32 app_area_read_size = 0; // Actual number of bytes set by nfpGetApplicationArea.
     if (app_area_size > sizeof(app_area)) app_area_size = sizeof(app_area);
     if (R_SUCCEEDED(rc)) {
-        rc = nfpGetApplicationArea(&handle, app_area, app_area_size);
+        rc = nfpGetApplicationArea(&handle, app_area, app_area_size, &app_area_read_size);
 
         if (R_SUCCEEDED(rc)) {
-            printf("App area:\n");
-            print_hex(app_area, app_area_size);
+            printf("App data:\n");
+            print_hex(app_area, app_area_read_size);
+            printf("\n");
         }
     }
 
@@ -171,11 +228,7 @@ fail_0:
 int main(int argc, char* argv[])
 {
     Result rc = 0;
-
-    // Hardcoded for Super Smash Bros. Ultimate.
-    // See also: https://switchbrew.org/wiki/NFC_services#Application_IDs
-    u32 app_id = 0x34f80200;
-
+    
     // This example uses a text console, as a simple way to output text to the screen.
     // If you want to write a software-rendered graphics application,
     //   take a look at the graphics/simplegfx example, which uses the libnx Framebuffer API instead.
@@ -194,7 +247,9 @@ int main(int argc, char* argv[])
     consoleUpdate(NULL);
 
     // Initialize the nfp:* service.
-    rc = nfpInitialize(NfpServiceType_User);
+    // Use the NfpServiceType as required by your app, only use Debug if actually needed.
+    // This example uses nfpGetAdminInfo which is only available on the debug interface.
+    rc = nfpInitialize(NfpServiceType_Debug);
 
     // Check if NFC is enabled. If not, wait until it is.
     // Note that various official games don't use nfc*().
@@ -237,7 +292,7 @@ int main(int argc, char* argv[])
         // padGetButtonsDown returns the set of buttons that have been
         // newly pressed in this frame compared to the previous one
         if (padGetButtonsDown(&pad) & HidNpadButton_A) {
-            rc = process_amiibo(app_id);
+            rc = process_amiibo();
 
             // If an error happened, print it.
             if (R_FAILED(rc))
