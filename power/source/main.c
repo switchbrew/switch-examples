@@ -4,7 +4,7 @@
 
 #include <switch.h>
 
-const char* const chargers[3] = {"None", "Official", "Generic"};
+const char* const chargers[4] = {"None", "Full Power", "Low Power", "Unsupported"};
 
 int main(int argc, char **argv)
 {
