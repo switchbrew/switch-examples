@@ -28,17 +28,12 @@ int main(int argc, char* argv[])
     PadState pad;
     padInitializeDefault(&pad);
 
-    printf("Press PLUS to exit.\n");
-
     // Two VibrationDeviceHandles are returned: first one for left-joycon, second one for right-joycon.
     // Change the total_handles param to 1, and update the hidSendVibrationValues calls, if you only want 1 VibrationDeviceHandle.
     rc = hidInitializeVibrationDevices(VibrationDeviceHandles[0], 2, HidNpadIdType_Handheld, HidNpadStyleTag_NpadHandheld);
 
     // Setup VibrationDeviceHandles for HidNpadIdType_No1 too, since we want to support both HidNpadIdType_Handheld and HidNpadIdType_No1.
     if (R_SUCCEEDED(rc)) rc = hidInitializeVibrationDevices(VibrationDeviceHandles[1], 2, HidNpadIdType_No1, HidNpadStyleTag_NpadJoyDual);
-    printf("hidInitializeVibrationDevices() returned: 0x%x\n", rc);
-
-    if (R_SUCCEEDED(rc)) printf("Hold R to vibrate, and press A/B/X/Y while holding R to adjust values.\n");
 
     VibrationValue.amp_low   = 0.2f;
     VibrationValue.freq_low  = 10.0f;
@@ -55,6 +50,14 @@ int main(int argc, char* argv[])
     // Main loop
     while(appletMainLoop())
     {
+        consoleClear();
+        printf("Press PLUS to exit.\n");
+        printf("Hold R to vibrate.\n");
+        printf("Press D-Pad (frequency) and face buttons (amplitude) to adjust values.\n");
+
+        printf("High frequency %.0f, amplitude %.1f\n", VibrationValue.freq_high, VibrationValue.amp_high);
+        printf("Low frequency %.0f, amplitude %.1f\n", VibrationValue.freq_low, VibrationValue.amp_low);
+
         // Scan the gamepad. This should be done once for each frame
         padUpdate(&pad);
 
@@ -67,6 +70,18 @@ int main(int argc, char* argv[])
         //Select which devices to vibrate.
         target_device = padIsHandheld(&pad) ? 0 : 1;
 
+        if (kDown & HidNpadButton_A) VibrationValue.amp_low += 0.1f;
+        if (kDown & HidNpadButton_Y) VibrationValue.amp_low -= 0.1f;
+
+        if (kDown & HidNpadButton_X) VibrationValue.amp_high += 0.1f;
+        if (kDown & HidNpadButton_B) VibrationValue.amp_high -= 0.1f;
+
+        if (kDown & HidNpadButton_Right) VibrationValue.freq_low += 5.0f;
+        if (kDown & HidNpadButton_Left)  VibrationValue.freq_low -= 5.0f;
+
+        if (kDown & HidNpadButton_Up)   VibrationValue.freq_high += 12.0f;
+        if (kDown & HidNpadButton_Down) VibrationValue.freq_high -= 12.0f;
+
         if (R_SUCCEEDED(rc) && (kHeld & HidNpadButton_R))
         {
             //Calling hidSendVibrationValue/hidSendVibrationValues is really only needed when sending new VibrationValue(s).
@@ -77,11 +92,6 @@ int main(int argc, char* argv[])
 
             rc2 = hidSendVibrationValues(VibrationDeviceHandles[target_device], VibrationValues, 2);
             if (R_FAILED(rc2)) printf("hidSendVibrationValues() returned: 0x%x\n", rc2);
-
-            if (kDown & HidNpadButton_A) VibrationValue.amp_low   += 0.1f;
-            if (kDown & HidNpadButton_B) VibrationValue.freq_low  += 5.0f;
-            if (kDown & HidNpadButton_X) VibrationValue.amp_high  += 0.1f;
-            if (kDown & HidNpadButton_Y) VibrationValue.freq_high += 12.0f;
         }
         else if(kUp & HidNpadButton_R)//Stop vibration for all devices.
         {
