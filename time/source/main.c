@@ -1,5 +1,6 @@
 #include <string.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <time.h>
 
 #include <switch.h>
@@ -20,6 +21,7 @@ int main(int argc, char **argv)
     padInitializeDefault(&pad);
 
     printf("\x1b[16;16HPress PLUS to exit.");
+    printf("\x1b[17;16HTZ=%s\n", getenv("TZ"));
 
     // Main loop
     while(appletMainLoop())
@@ -34,7 +36,7 @@ int main(int argc, char **argv)
 
         //Print current time
         time_t unixTime = time(NULL);
-        struct tm* timeStruct = gmtime((const time_t *)&unixTime);//Gets UTC time. If you want local-time use localtime().
+        struct tm* timeStruct = localtime((const time_t *)&unixTime); // Gets local time. If you want UTC use gmtime().
 
         int hours = timeStruct->tm_hour;
         int minutes = timeStruct->tm_min;
