@@ -206,7 +206,7 @@ int main(void)
                 }
 
                 if (wavei >= 0) {
-                    curbuf = (opus_int16*)(mempool_ptr + wavebuf[wavei].start_sample_offset);
+                    curbuf = (opus_int16*)(mempool_ptr + wavebuf[wavei].start_sample_offset * sizeof(opus_int16));
 
                     opret = op_read(of, tmpdata_ptr, max_samples * num_channels, NULL);//The buffer used here has to be seperate from mempool_ptr.
                     if (opret < 0)
