@@ -74,15 +74,15 @@ int main(void)
 
     size_t num_channels = 1;
     size_t samplerate = 48000;
-    size_t max_samples = samplerate;
+    size_t max_samples = samplerate/20;//each wavebuf can hold upto 1sec/20 = 50ms of audio data
     size_t max_samples_datasize = max_samples*num_channels*sizeof(opus_int16);
-    size_t mempool_size = (max_samples_datasize*2 + 0xFFF) &~ 0xFFF;//*2 for 2 wavebufs.
+    size_t mempool_size = (max_samples_datasize*4 + 0xFFF) &~ 0xFFF;//*4 for 4 wavebufs.
     void* mempool_ptr = memalign(0x1000, mempool_size);
     void* tmpdata_ptr = malloc(max_samples_datasize);
     opuspkt_tmpbuf = (u8*)malloc(opuspkt_tmpbuf_size);
     opus_int16* curbuf = NULL;
 
-    AudioDriverWaveBuf wavebuf[2] = {0};
+    AudioDriverWaveBuf wavebuf[4] = {0};
     int i, wavei;
 
     HwopusDecoder hwdecoder = {0};
@@ -151,9 +151,9 @@ int main(void)
                     }
                     audrvVoiceStart(&drv, 0);
 
-                    for(i=0; i<2; i++) {
+                    for(i=0; i<4; i++) {
                         wavebuf[i].data_raw = mempool_ptr;
-                        wavebuf[i].size = max_samples_datasize*2;//*2 for 2 wavebufs.
+                        wavebuf[i].size = max_samples_datasize*4;//*4 for 4 wavebufs.
                         wavebuf[i].start_sample_offset = i * max_samples;
                         wavebuf[i].end_sample_offset = wavebuf[i].start_sample_offset + max_samples;
                     }
@@ -198,7 +198,7 @@ int main(void)
 
             if (audio_playing) {
                 wavei = -1;
-                for(i=0; i<2; i++) {
+                for(i=0; i<4; i++) {
                     if (wavebuf[i].state == AudioDriverWaveBufState_Free || wavebuf[i].state == AudioDriverWaveBufState_Done) {
                         wavei = i;
                         break;
