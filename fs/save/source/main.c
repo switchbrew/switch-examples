@@ -6,7 +6,7 @@
 
 //This example shows how to access savedata for (official) applications/games.
 
-Result get_save(u64 *application_id, AccountUid *uid) {
+Result get_save(u64 application_id, AccountUid *uid) {
     Result rc=0;
     FsSaveDataInfoReader reader;
     s64 total_entries=0;
@@ -24,8 +24,8 @@ Result get_save(u64 *application_id, AccountUid *uid) {
         rc = fsSaveDataInfoReaderRead(&reader, &info, 1, &total_entries);//See libnx fs.h.
         if (R_FAILED(rc) || total_entries==0) break;
 
-        if (info.save_data_type == FsSaveDataType_Account) {//Filter by FsSaveDataType_Account, however note that FsSaveDataSpaceId_User can have non-FsSaveDataType_Account.
-            *application_id = info.application_id;
+        //Filter by FsSaveDataType_Account, however note that FsSaveDataSpaceId_User can have non-FsSaveDataType_Account.
+        if (info.save_data_type == FsSaveDataType_Account && application_id == info.application_id) {
             *uid = info.uid;
             found = 1;
             break;
@@ -63,7 +63,7 @@ int main(int argc, char **argv)
     //Try to find savedata to use with get_save() first, otherwise fallback to the above hard-coded TID + the userID from accountGetPreselectedUser(). Note that you can use either method.
     //See the account example for getting account info for an userID.
     //See also the app_controldata example for getting info for an application_id.
-    if (R_FAILED(get_save(&application_id, &uid))) {
+    if (R_FAILED(get_save(application_id, &uid))) {
         rc = accountInitialize(AccountServiceType_Application);
         if (R_FAILED(rc)) {
             printf("accountInitialize() failed: 0x%x\n", rc);
