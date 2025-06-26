@@ -443,8 +443,8 @@ static void GpuRenderer_scrollWindow(PrintConsole* con)
     // Perform the scrolling
     for (int y = 0; y < con->windowHeight-1; y ++) {
         memcpy(
-            &r->charBuf[(con->windowY+y+0)*con->consoleWidth + con->windowX],
-            &r->charBuf[(con->windowY+y+1)*con->consoleWidth + con->windowX],
+            &r->charBuf[(con->windowY-1+y+0)*con->consoleWidth + con->windowX - 1],
+            &r->charBuf[(con->windowY-1+y+1)*con->consoleWidth + con->windowX - 1],
             sizeof(ConsoleChar)*con->windowWidth);
     }
 }
