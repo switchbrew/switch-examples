@@ -95,8 +95,8 @@ int main(int argc, char* argv[])
         HidAnalogStickState analog_stick_r = padGetStickPos(&pad, 1);
 
         // Print the sticks' position
-        printf("\x1b[3;1H%04d; %04d", analog_stick_l.x, analog_stick_l.y);
-        printf("\x1b[5;1H%04d; %04d", analog_stick_r.x, analog_stick_r.y);
+        printf("\x1b[3;1H%04d; %04d  ", analog_stick_l.x, analog_stick_l.y);
+        printf("\x1b[5;1H%04d; %04d  ", analog_stick_r.x, analog_stick_r.y);
 
         // Update the console, sending a new frame to the display
         consoleUpdate(NULL);
